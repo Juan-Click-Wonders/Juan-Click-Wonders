@@ -1,0 +1,14 @@
+jcw-venv/*
+.env
+
+__pycache__/
+*.py[cod]
+
+*/migrations/*.pyc
+*/migrations/*.pyo
+*/migrations/__pycache__/
+*/migrations/*.py[co]
+
+node_modules/
+
+.DS_Store
