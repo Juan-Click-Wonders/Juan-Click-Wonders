@@ -27,6 +27,20 @@ pip install -r requirements.txt
 
 3. Make sure you have a local copy of `.env` (See `.env.dist` for required variables)
 
+4. Create necessary user and database in postgres. Login to postgres using your admin user and create role and create database.
+
+```bash
+psql -U postgres #swapped to your admin user if any
+```
+
+```bash
+CREATE ROLE jcw_user WITH LOGIN PASSWORD 'password';
+```
+
+```bash
+CREATE DATABASE juanclickwonders;
+```
+
 4. Migrate the database
 
 ```bash
