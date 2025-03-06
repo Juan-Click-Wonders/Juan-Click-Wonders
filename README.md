@@ -11,7 +11,11 @@ python -m venv jcw-env
 ```
 
 ```bash
-source ./jcw-env/bin/activate
+source ./jcw-env/bin/activate #for linux and mac users
+```
+
+```bash
+./jcw-env/Scripts/activate #for windows users
 ```
 
 2. Install the necessary libraries
@@ -25,7 +29,7 @@ pip install -r requirements.txt
 4. Create necessary user and database in postgres. Login to postgres using your admin user and create role and create database.
 
 ```bash
-psql -U postgres #swapped to your admin user if any
+psql -U postgres -d juanclickwonders #swap postgres to your admin user if different
 ```
 
 ```bash
@@ -33,11 +37,15 @@ CREATE ROLE jcw_user WITH LOGIN PASSWORD 'password';
 ```
 
 ```bash
-ALTER ROLE jcw_user CREATEDB;
+CREATE DATABASE juanclickwonders;
 ```
 
 ```bash
-CREATE DATABASE juanclickwonders;
+GRANT ALL PRIVILEGES ON DATABASE juanclickwonders TO jcw_user;
+```
+
+```bash
+GRANT ALL PRIVILEGES ON SCHEMA public TO jcw_user;
 ```
 
 5. Migrate the database
