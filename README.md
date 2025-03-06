@@ -38,6 +38,10 @@ CREATE ROLE jcw_user WITH LOGIN PASSWORD 'password';
 ```
 
 ```bash
+ALTER ROLE jcw_user CREATEDB;
+```
+
+```bash
 CREATE DATABASE juanclickwonders;
 ```
 
