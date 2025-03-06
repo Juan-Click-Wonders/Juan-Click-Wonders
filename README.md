@@ -1,8 +1,3 @@
-Abarca, James\
-Agner, Neil Dustin Benedict\
-Dela Cruz, Angelo\
-Mangabat, Aster Benedict
-
 # Juan-Click Wonders
 
 An e-commerce website for tech enthusiasts.
@@ -45,17 +40,18 @@ ALTER ROLE jcw_user CREATEDB;
 CREATE DATABASE juanclickwonders;
 ```
 
-4. Migrate the database
+5. Migrate the database
 
 ```bash
 python manage.py migrate
 ```
- 5. Run the development server
 
- ```bash
- python manage.py runserver
- ```
+6. Run the development server
 
- # Contributors
+```bash
+python manage.py runserver
+```
 
- Special thanks to [James](https://github.com/kintengg), [Aster](https://github.com/astermangabat25), [Dustin](https://github.com/DustinAgner27), and [Gelo](https://github.com/angelo-dlcrz).
+# Contributors
+
+Special thanks to [James](https://github.com/kintengg), [Aster](https://github.com/astermangabat25), [Dustin](https://github.com/DustinAgner27), and [Gelo](https://github.com/angelo-dlcrz).
