@@ -1,5 +1,5 @@
 <template>
-    <div class="container mx-auto flex">
+    <div class="w-full mx-auto flex">
         <!-- Sidebar (Category Filter) -->
         <aside class="w-1/4 p-4">
             <h2 class="text-xl font-semibold mb-2">Filter by Category</h2>
@@ -12,9 +12,9 @@
         </aside>
 
         <!-- Product Grid -->
-        <div class="w-3/4 grid grid-cols-3 gap-6 p-4">
+        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-6">
             <router-link v-for="product in filteredProducts" :key="product.id" :to="'/product/' + product.id"
-                class="block border p-6 rounded-lg shadow-md bg-white hover:shadow-lg transition-transform transform hover:scale-105">
+                class="block border p-8 rounded-lg shadow-md bg-white hover:shadow-lg transition-transform transform hover:scale-105 w-full">
                 <!-- Placeholder for Product Image -->
                 <div class="h-40 bg-gray-300 flex items-center justify-center">
                     <img :src="product.image" :alt="product.title" class="max-h-full max-w-full">

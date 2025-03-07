@@ -2,7 +2,7 @@
     <div class="flex-grow">
         <!-- Header -->
         <header class="bg-gray-900 text-white">
-            <div class="w-screen px-4">
+            <div class="w-full px-4">
                 <!-- Top Bar with Logo, Search, Cart and Login -->
                 <div class="flex items-center justify-between">
                     <div class="!h-full !py-2 !mx-25">
