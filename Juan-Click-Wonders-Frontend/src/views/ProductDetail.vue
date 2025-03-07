@@ -9,8 +9,8 @@
         <div v-if="product" class="flex gap-8 mt-4">
             <!-- Product Image -->
             <div class="w-1/2">
-                <img v-if="getImageUrl(product.Product_Picture)" :src="getImageUrl(product.Product_Picture)"
-                    :alt="product.Product_Name" class="w-full max-h-[500px] object-contain">
+                <img v-if="getImageUrl(product.product_image)" :src="getImageUrl(product.product_image)"
+                    :alt="product.product_name" class="w-full max-h-[500px] object-contain">
                 <div v-else class="w-full h-[500px] bg-gray-200 flex items-center justify-center">
                     <span>No Image Available</span>
                 </div>
@@ -22,7 +22,7 @@
                 <!-- <h4 class="text-sm text-gray-500 uppercase font-semibold">{{ product.category }}</h4> -->
 
                 <!-- Title -->
-                <h2 class="text-3xl font-bold mt-1">{{ product.Product_Name }}</h2>
+                <h2 class="text-3xl font-bold mt-1">{{ product.product_name }}</h2>
 
                 <!-- Ratings -->
                 <!-- <div class="flex items-center text-yellow-500 mt-2">
@@ -34,16 +34,16 @@
                 </div> -->
 
                 <!-- Brand -->
-                <p class="text-gray-700 mt-4">Brand: {{ product.Brand }}</p>
+                <p class="text-gray-700 mt-4">Brand: {{ product.brand }}</p>
 
                 <!-- Description -->
-                <p class="text-gray-700 mt-4">{{ product.Description }}</p>
+                <p class="text-gray-700 mt-4">{{ product.description }}</p>
 
                 <!-- Price -->
-                <p class="text-2xl font-semibold text-gray-800 mt-4">₱{{ product.Price.toLocaleString() }}</p>
+                <p class="text-2xl font-semibold text-gray-800 mt-4">₱{{ product.price.toLocaleString() }}</p>
 
                 <!-- Stock -->
-                <p class="text-gray-700 mt-2">Stock Available: {{ product.Inventory_Level }}</p>
+                <p class="text-gray-700 mt-2">Stock Available: {{ product.inventory_level }}</p>
 
                 <!-- Quantity Selector & Buy Button -->
                 <div class="flex items-center mt-6 gap-4">
