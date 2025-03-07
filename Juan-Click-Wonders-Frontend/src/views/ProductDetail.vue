@@ -9,31 +9,41 @@
         <div v-if="product" class="flex gap-8 mt-4">
             <!-- Product Image -->
             <div class="w-1/2">
-                <img :src="product.image" :alt="product.title" class="w-full max-h-[500px] object-contain">
+                <img v-if="getImageUrl(product.Product_Picture)" :src="getImageUrl(product.Product_Picture)"
+                    :alt="product.Product_Name" class="w-full max-h-[500px] object-contain">
+                <div v-else class="w-full h-[500px] bg-gray-200 flex items-center justify-center">
+                    <span>No Image Available</span>
+                </div>
             </div>
 
             <!-- Product Details -->
             <div class="w-1/2">
                 <!-- Category -->
-                <h4 class="text-sm text-gray-500 uppercase font-semibold">{{ product.category }}</h4>
+                <!-- <h4 class="text-sm text-gray-500 uppercase font-semibold">{{ product.category }}</h4> -->
 
                 <!-- Title -->
-                <h2 class="text-3xl font-bold mt-1">{{ product.title }}</h2>
+                <h2 class="text-3xl font-bold mt-1">{{ product.Product_Name }}</h2>
 
                 <!-- Ratings -->
-                <div class="flex items-center text-yellow-500 mt-2">
+                <!-- <div class="flex items-center text-yellow-500 mt-2">
                     <span v-for="star in 5" :key="star">
                         <i v-if="star <= Math.round(product.rating.rate)" class="fas fa-star"></i>
                         <i v-else class="far fa-star"></i>
                     </span>
                     <span class="ml-2 text-gray-500">({{ product.rating.count }} reviews)</span>
-                </div>
+                </div> -->
+
+                <!-- Brand -->
+                <p class="text-gray-700 mt-4">Brand: {{ product.Brand }}</p>
 
                 <!-- Description -->
-                <p class="text-gray-700 mt-4">{{ product.description }}</p>
+                <p class="text-gray-700 mt-4">{{ product.Description }}</p>
 
                 <!-- Price -->
-                <p class="text-2xl font-semibold text-gray-800 mt-4">₱{{ product.price }}</p>
+                <p class="text-2xl font-semibold text-gray-800 mt-4">₱{{ product.Price.toLocaleString() }}</p>
+
+                <!-- Stock -->
+                <p class="text-gray-700 mt-2">Stock Available: {{ product.Inventory_Level }}</p>
 
                 <!-- Quantity Selector & Buy Button -->
                 <div class="flex items-center mt-6 gap-4">
@@ -67,6 +77,14 @@
 <script>
 import axios from "axios";
 
+// Create an axios instance with the base URL
+const api = axios.create({
+    baseURL: 'http://127.0.0.1:8000',
+    headers: {
+        'Accept': 'application/json'
+    }
+});
+
 export default {
     data() {
         return {
@@ -75,16 +93,23 @@ export default {
         };
     },
     methods: {
+        getImageUrl(imagePath) {
+            if (!imagePath) return null;
+
+            return imagePath;
+        },
         fetchProduct() {
             const productId = this.$route.params.id;
-            axios.get(`https://fakestoreapi.com/products/${productId}`)
+            api.get(`/api/products/${productId}/`)
                 .then(response => {
                     this.product = response.data;
                 })
-                .catch(error => console.error("Error fetching product:", error));
+                .catch(error => {
+                    console.error("Error fetching product:", error);
+                });
         },
         increaseQuantity() {
-            if (this.quantity < 10) this.quantity++;
+            if (this.quantity < this.product.Inventory_Level) this.quantity++;
         },
         decreaseQuantity() {
             if (this.quantity > 1) this.quantity--;
