@@ -1,7 +1,7 @@
 <template>
     <div class="w-full mx-auto flex">
         <!-- Sidebar (Category Filter) -->
-        <aside class="w-1/4 p-4">
+        <aside class="w-full sm:w-1/3 md:w-1/4 lg:w-1/10 mt-10 w-max h-max p-4 border-black border-2 rounded-xl ml-4">
             <h2 class="text-xl font-semibold mb-2">Filter by Category</h2>
             <div v-for="category in categories" :key="category">
                 <label class="flex items-center space-x-2">
