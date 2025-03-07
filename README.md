@@ -24,7 +24,7 @@ source ./jcw-env/bin/activate #for linux and mac users
 cd Juan-Click-Wonders-Frontend
 npm install
 npm install axios
-npm install tailwindcss
+npm install tailwindcss @tailwindcss/vite
 cd ..
 pip install -r requirements.txt
 ```
