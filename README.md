@@ -21,6 +21,11 @@ source ./jcw-env/bin/activate #for linux and mac users
 2. Install the necessary libraries
 
 ```bash
+cd Juan-Click-Wonders-Frontend
+npm install
+npm install axios
+npm install tailwindcss @tailwindcss/vite
+cd ..
 pip install -r requirements.txt
 ```
 
