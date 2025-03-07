@@ -45,7 +45,6 @@ def productsApi(request, id=0):
 
     elif request.method == "PUT":
         products_data = request.POST.dict()
-        print(products_data)
         product_id = products_data.get("product_ID")
 
         if not product_id:
