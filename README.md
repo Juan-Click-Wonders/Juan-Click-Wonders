@@ -26,7 +26,6 @@ npm install
 npm install axios
 npm install tailwindcss
 cd ..
-cd JuanClickWonders
 pip install -r requirements.txt
 ```
 
