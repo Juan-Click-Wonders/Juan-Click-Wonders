@@ -1,9 +1,11 @@
-from rest_framework import serializers
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
-from .models import UserProfile, User
+from rest_framework import serializers
+from .models import UserProfile
+
+User = get_user_model()
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -12,7 +14,8 @@ class RegisterSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(max_length=15, write_only=True)
     address = serializers.CharField(write_only=True)
     password1 = serializers.CharField(
-        write_only=True, min_length=8, validators=[validate_password])
+        write_only=True, min_length=8, validators=[validate_password]
+    )
     password2 = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
@@ -23,7 +26,8 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password1'] != attrs['password2']:
             raise serializers.ValidationError(
-                {"password": "Passwords do not match."})
+                {"password": "Passwords do not match."}
+            )
         return attrs
 
     def create(self, validated_data):
@@ -55,16 +59,21 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['email']
+        fields = ['email', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
+    created_at = serializers.DateTimeField(
+        source='user.created_at', read_only=True
+    )
 
     class Meta:
         model = UserProfile
-        fields = ['email', 'first_name',
-                  'last_name', 'phone_number', 'address']
+        fields = ['email', 'first_name', 'last_name',
+                  'phone_number', 'address', 'created_at']
+        read_only_fields = ['created_at']
 
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
@@ -77,22 +86,28 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         user = self.context['request'].user
-        if not user.check_password(data['current_password']):
+        if not user.check_password(data.get('current_password')):
             raise serializers.ValidationError(
-                {"current_password": "Invalid credentials."})
+                {"current_password": "Invalid credentials."}
+            )
         return data
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', {})
         email = user_data.get('email')
-        if email:
+        if email and email != instance.user.email:
+            if User.objects.filter(email=email).exclude(id=instance.user.id).exists():
+                raise serializers.ValidationError(
+                    {"email": "This email is already in use."}
+                )
             instance.user.email = email
             instance.user.save()
-        instance.phone_number = validated_data.get(
-            'phone_number', instance.phone_number)
-        instance.address = validated_data.get('address', instance.address)
-        instance.save()
 
+        for field in ['phone_number', 'address']:
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
+
+        instance.save()
         return instance
 
 
@@ -111,7 +126,7 @@ class UpdatePasswordSerializer(serializers.Serializer):
             )
         if data['new_password'] != data['confirm_new_password']:
             raise serializers.ValidationError(
-                {"new_password": "New passwords do not match."}
+                {"new_password": "Passwords do not match."}
             )
         return data
 
@@ -135,8 +150,10 @@ class ForgotPasswordSerializer(serializers.Serializer):
 class ResetPasswordSerializer(serializers.Serializer):
     uidb64 = serializers.CharField()
     token = serializers.CharField()
-    new_password = serializers.CharField(write_only=True)
-    confirm_new_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(
+        write_only=True, min_length=8, validators=[validate_password]
+    )
+    confirm_new_password = serializers.CharField(write_only=True, min_length=8)
 
     def validate(self, data):
         uidb64 = data.get("uidb64")
@@ -145,13 +162,15 @@ class ResetPasswordSerializer(serializers.Serializer):
         confirm_new_password = data.get("confirm_new_password")
 
         if new_password != confirm_new_password:
-            raise serializers.ValidationError("Passwords do not match.")
+            raise serializers.ValidationError(
+                {"new_password": "Passwords do not match."}
+            )
 
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
         except (User.DoesNotExist, ValueError, TypeError):
-            raise serializers.ValidationError("Invalid user.")
+            raise serializers.ValidationError("Invalid user ID.")
 
         if not default_token_generator.check_token(user, token):
             raise serializers.ValidationError("Invalid or expired token.")
