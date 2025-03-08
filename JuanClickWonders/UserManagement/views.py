@@ -2,6 +2,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.conf import settings
 
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -101,13 +104,13 @@ class ForgotPasswordView(APIView):
         email = serializer.validated_data["email"]
         user = User.objects.get(email=email)
 
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        reset_url = f"http://frontend-url/reset-password/{token}/"
-
+        reset_url = f"http://frontend-url/reset-password/{uidb64}/{token}/"
         send_mail(
             "Password Reset Request",
             f"Click the link to reset your password: {reset_url}",
-            "admin@example.com",
+            settings.EMAIL_HOST_USER,
             [email],
             fail_silently=False,
         )
