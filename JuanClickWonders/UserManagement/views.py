@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from .models import UserProfile
 from .serializers import (
     RegisterSerializer, LoginSerializer, UserSerializer, UserProfileSerializer,
@@ -34,38 +35,74 @@ class LoginView(APIView):
         user = serializer.validated_data['user']
         refresh = RefreshToken.for_user(user)
 
-        return Response(
+        response = Response(
             {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user': {
-                    'email': user.email,
+                "user": {
+                    "email": user.email,
                 }
             }, status=status.HTTP_200_OK
         )
+
+        response.set_cookie(
+            key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+            value=str(refresh.access_token),
+            max_age=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds(
+            ),
+            path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
+            domain=settings.SIMPLE_JWT['AUTH_COOKIE_DOMAIN'],
+            secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+            httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+            samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+        )
+
+        response.set_cookie(
+            key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+            value=str(refresh),
+            max_age=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds(
+            ),
+            path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
+            domain=settings.SIMPLE_JWT['AUTH_COOKIE_DOMAIN'],
+            secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+            httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+            samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+        )
+
+        return response
 
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        refresh_token = request.data.get("refresh")
-        if not refresh_token:
-            return Response(
-                {"error": "Refresh token is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         try:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-            return Response(
+            refresh_token = request.COOKIES.get(
+                settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+
+            response = Response(
                 {"message": "Logout successful."},
                 status=status.HTTP_200_OK
             )
+
+            response.delete_cookie(
+                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
+                domain=settings.SIMPLE_JWT['AUTH_COOKIE_DOMAIN']
+            )
+            response.delete_cookie(
+                key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
+                domain=settings.SIMPLE_JWT['AUTH_COOKIE_DOMAIN']
+            )
+
+            return response
+
         except Exception:
             return Response(
-                {"error": "Invalid or expired refresh token."},
+                {"error": "Logout failed."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -171,3 +208,63 @@ class ResetPasswordView(APIView):
             {"message": "Password reset successfully."},
             status=status.HTTP_200_OK
         )
+
+
+class TokenRefreshView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get(
+            settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+
+        if not refresh_token:
+            return Response(
+                {"error": "No refresh token found."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            refresh = RefreshToken(refresh_token)
+
+            response = Response(
+                {"message": "Token refreshed successfully."}, status=status.HTTP_200_OK
+            )
+
+            response.set_cookie(
+                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                value=str(refresh.access_token),
+                max_age=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds(
+                ),
+                path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
+                domain=settings.SIMPLE_JWT['AUTH_COOKIE_DOMAIN'],
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+            )
+
+            if settings.SIMPLE_JWT['ROTATE_REFRESH_TOKENS']:
+                if settings.SIMPLE_JWT['BLACKLIST_AFTER_ROTATION']:
+                    refresh.blacklist()
+
+                new_refresh = RefreshToken.for_user(
+                    refresh.payload.get('user_id'))
+
+                response.set_cookie(
+                    key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+                    value=str(new_refresh),
+                    max_age=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds(
+                    ),
+                    path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
+                    domain=settings.SIMPLE_JWT['AUTH_COOKIE_DOMAIN'],
+                    secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                    httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                    samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+                )
+
+            return response
+
+        except TokenError:
+            return Response(
+                {"error": "Invalid or expired token."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
