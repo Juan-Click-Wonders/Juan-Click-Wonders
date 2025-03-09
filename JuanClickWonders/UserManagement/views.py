@@ -36,11 +36,7 @@ class LoginView(APIView):
         refresh = RefreshToken.for_user(user)
 
         response = Response(
-            {
-                "user": {
-                    "email": user.email,
-                }
-            }, status=status.HTTP_200_OK
+            {"message": "Login successful."}, status=status.HTTP_200_OK
         )
 
         response.set_cookie(
@@ -138,17 +134,53 @@ class UpdatePasswordView(generics.UpdateAPIView):
     def get_object(self):
         return self.request.user
 
+    def update(self, request):
+        user = self.get_object()
+        serializer = self.get_serializer(instance=user, data=request.data)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(
+                {"message": "Password updated successfully."},
+                status=status.HTTP_200_OK
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class DeleteUserView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request):
         user = request.user
-        user.delete()
-        return Response(
+        refresh_token = request.COOKIES.get(
+            settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
+
+        response = Response(
             {"message": "User deleted successfully."},
             status=status.HTTP_204_NO_CONTENT
         )
+
+        response.delete_cookie(
+            key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+            path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
+            domain=settings.SIMPLE_JWT['AUTH_COOKIE_DOMAIN']
+        )
+        response.delete_cookie(
+            key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+            path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
+            domain=settings.SIMPLE_JWT['AUTH_COOKIE_DOMAIN']
+        )
+
+        user.delete()
+        return response
 
 
 class ForgotPasswordView(APIView):
@@ -247,7 +279,8 @@ class TokenRefreshView(APIView):
                     refresh.blacklist()
 
                 new_refresh = RefreshToken.for_user(
-                    refresh.payload.get('user_id'))
+                    User.objects.get(id=refresh['user_id'])
+                )
 
                 response.set_cookie(
                     key=settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
