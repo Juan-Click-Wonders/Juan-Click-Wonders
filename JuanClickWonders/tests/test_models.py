@@ -16,7 +16,7 @@ class TestUserModel:
         assert user.is_active is True
         assert user.is_staff is False
         assert user.is_superuser is False
-        assert user.check_password('testpasssword123')
+        assert user.check_password('testpassword123')
 
     def test_create_superuser(self):
         admin = User.objects.create_superuser(
