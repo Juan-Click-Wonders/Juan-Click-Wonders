@@ -10,26 +10,35 @@ An e-commerce website for tech enthusiasts.
 python -m venv jcw-env
 ```
 
-```bash
-source ./jcw-env/bin/activate #for linux and mac users
-```
+For Linux and Mac users
 
 ```bash
-./jcw-env/Scripts/activate #for windows users
+source ./jcw-env/bin/activate
+```
+
+For Windows users
+
+```bash
+./jcw-env/Scripts/activate 
 ```
 
 2. Install the necessary libraries
 
 ```bash
+cd Juan-Click-Wonders-Frontend
+npm install
+npm install axios
+npm install tailwindcss @tailwindcss/vite
+cd ..
 pip install -r requirements.txt
 ```
 
 3. Make sure you have a local copy of `.env` (See `.env.dist` for required variables)
 
-4. Create necessary user and database in postgres. Login to postgres using your admin user and create role and create database.
+4. Create necessary user and database in Postgres. Log in to Postgres using your admin user, create a role, and create a database.
 
 ```bash
-psql -U postgres -d juanclickwonders #swap postgres to your admin user if different
+psql -U postgres
 ```
 
 ```bash
@@ -46,6 +55,10 @@ GRANT ALL PRIVILEGES ON DATABASE juanclickwonders TO jcw_user;
 
 ```bash
 GRANT ALL PRIVILEGES ON SCHEMA public TO jcw_user;
+```
+
+```bash
+ALTER ROLE jcw_user CREATEDB;
 ```
 
 5. Migrate the database
