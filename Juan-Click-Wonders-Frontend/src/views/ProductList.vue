@@ -6,31 +6,31 @@
                 <div class="mb-6">
                     <h2 class="text-xl font-semibold mb-2">Filter by Category</h2>
                     <div class="space-y-2">
-                        <div v-for="(category, index) in displayedCategories" :key="category.category_id">
+                        <div v-for="category in displayedCategories" :key="category.category_id">
                             <label class="flex items-center space-x-2">
                                 <input type="checkbox" v-model="selectedCategories" :value="category.category_id"
-                                    @change="fetchProducts">
+                                    @change="applyFilters">
                                 <span>{{ category.category_name }}</span>
                             </label>
                         </div>
                         <button v-if="displayCategories.length > 5" @click="toggleCategories" class="text-blue-600 hover:text-blue-800 text-sm mt-2 flex items-center">
-                            {{ showAllCategories ? 'Show Less' : 'View More' }}
-                            <i :class="showAllCategories ? 'fas fa-chevron-up ml-1' : 'fas fa-chevron-down ml-1'"></i>
+                            {{ hasMoreCategories ? 'View More' : 'Show Less' }}
+                            <i :class="hasMoreCategories ? 'fas fa-chevron-down ml-1' : 'fas fa-chevron-up ml-1'"></i>
                         </button>
                     </div>
                 </div>
                 <div class="mb-6">
                     <h2 class="text-xl font-semibold mb-2">Filter by Brand</h2>
                     <div class="space-y-2">
-                        <div v-for="(brand, index) in displayedBrands" :key="brand">
+                        <div v-for="brand in displayedBrands" :key="brand">
                             <label class="flex items-center space-x-2">
-                                <input type="checkbox" v-model="selectedBrands" :value="brand" @change="fetchProducts">
+                                <input type="checkbox" v-model="selectedBrands" :value="brand" @change="applyFilters">
                                 <span>{{ brand }}</span>
                             </label>
                         </div>
                         <button v-if="uniqueBrands.length > 5"@click="toggleBrands" class="text-blue-600 hover:text-blue-800 text-sm mt-2 flex items-center">
-                            {{ showAllBrands ? 'Show Less' : 'View More' }}
-                            <i :class="showAllBrands ? 'fas fa-chevron-up ml-1' : 'fas fa-chevron-down ml-1'"></i>
+                            {{ hasMoreBrands ? 'View More' : 'Show Less' }}
+                            <i :class="hasMoreBrands ? 'fas fa-chevron-down ml-1' : 'fas fa-chevron-up ml-1'"></i>
                         </button>
                     </div>
                 </div>
@@ -40,11 +40,11 @@
                         <div class="flex space-x-2">
                             <div class="flex-1">
                                 <label class="text-sm text-gray-600 block mb-1">Min (₱)</label>
-                                <input type="number" v-model.number="priceRange.min" min="0" placeholder="Min" class="w-full px-2 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                <input type="number" v-model.number="priceRange.min" min="0" placeholder="Min" class="w-full px-2 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" @change="handlePriceChange">
                             </div>
                             <div class="flex-1">
                                 <label class="text-sm text-gray-600 block mb-1">Max (₱)</label>
-                                <input type="number" v-model.number="priceRange.max" min="0" placeholder="Max" class="w-full px-2 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                <input type="number" v-model.number="priceRange.max" min="0" placeholder="Max" class="w-full px-2 py-1.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" @change="handlePriceChange">
                             </div>
                         </div>
                         <div class="flex justify-between items-center">
@@ -52,15 +52,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex space-x-2">
-                    <button @click="applyFilters" class="flex-[3] bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center space-x-2">
-                        <i class="fas fa-filter"></i>
-                        <span>Apply</span>
-                    </button>
-                    <button @click="resetFilters" class="flex-1 border-2 border-gray-300 text-gray-600 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center">
-                        <i class="fas fa-undo"></i>
-                    </button>
-                </div>
+                <button @click="resetFilters" class="w-full border-2 border-gray-300 text-gray-600 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center space-x-2">
+                    <i class="fas fa-undo"></i>
+                    <span>Reset Filters</span>
+                </button>
             </aside>
 
             <!-- Main Content  -->
@@ -76,15 +71,27 @@
                     </div>
                     <div class="flex items-center space-x-6 mr-2">
                         <div class="relative">
-                            <button @click="toggleSortDropdown" class="flex items-center space-x-2 px-4 py-2 bg-white border rounded-lg hover:bg-gray-50">
+                            <button @click="toggleSortDropdown" 
+                                class="flex items-center space-x-2 px-4 py-2 bg-white border rounded-lg hover:bg-gray-50"
+                            >
                                 <span>Sort By: {{ getSortLabel }}</span>
                                 <i :class="sortDropdownOpen ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
                             </button>
-                            <div v-if="sortDropdownOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
-                                <button v-for="option in sortOptions" :key="option.value" @click="updateSort(option.value)" class="w-full text-left px-4 py-2 hover:bg-gray-100 flex justify-between items-center" :class="{ 'font-semibold': sortBy === option.value }">
+                            
+                            <!-- Dropdown Menu -->
+                            <div v-if="sortDropdownOpen" 
+                                class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border"
+                            >
+                                <button 
+                                    v-for="option in sortOptions" 
+                                    :key="option.value"
+                                    @click="updateSort(option.value)"
+                                    class="w-full text-left px-4 py-2 hover:bg-gray-100 flex justify-between items-center"
+                                    :class="{ 'font-semibold': sortBy === option.value }"
+                                >
                                     {{ option.label }}
                                     <span v-if="sortBy === option.value">
-                                        <i :class="getSortIcon(option.value)"></i>
+                                        <i :class="sortDirection === 'asc' ? 'fas fa-sort-numeric-down' : 'fas fa-sort-numeric-up'"></i>
                                     </span>
                                 </button>
                             </div>
@@ -141,19 +148,19 @@ export default {
         return {
             products: [],
             categories: [],
+            displayCategories: [],
             selectedCategories: [],
             selectedBrands: [],
             searchQuery: '',
             currentPage: 1,
             productsPerPage: 18,
             loading: false,
-            sortBy: 'name',
-            sortDirection: 'asc',
+            sortBy: '',
+            sortDirection: '',
             showAllCategories: false,
             showAllBrands: false,
             sortDropdownOpen: false,
             sortOptions: [
-                { label: 'Name', value: 'name' },
                 { label: 'Price', value: 'price' },
                 { label: 'Most Sold', value: 'sold_products' }
             ],
@@ -168,19 +175,13 @@ export default {
                     min: null,
                     max: null
                 }
-            }
+            },
+            uniqueBrands: [],
+            visibleCategoryCount: 5,
+            visibleBrandCount: 5
         };
     },
     computed: {
-        displayCategories() {
-            return this.categories.map(category => ({
-                category_id: category.category_id,
-                category_name: category.category_name
-            }));
-        },
-        uniqueBrands() {
-            return [...new Set(this.products.map(product => product.brand))].sort();
-        },
         paginatedProducts() {
             const start = (this.currentPage - 1) * this.productsPerPage;
             const end = start + this.productsPerPage;
@@ -190,20 +191,24 @@ export default {
             return Math.ceil(this.products.length / this.productsPerPage);
         },
         displayedCategories() {
-            if (this.showAllCategories) {
-                return this.displayCategories;
-            }
-            return this.displayCategories.slice(0, 5);
+            return this.displayCategories.slice(0, this.visibleCategoryCount);
         },
         displayedBrands() {
-            if (this.showAllBrands) {
-                return this.uniqueBrands;
-            }
-            return this.uniqueBrands.slice(0, 5);
+            return this.uniqueBrands.slice(0, this.visibleBrandCount);
         },
         getSortLabel() {
             const option = this.sortOptions.find(opt => opt.value === this.sortBy);
-            return option ? option.label : 'Name';
+            return option ? option.label : 'Price';
+        },
+        hasMoreCategories() {
+            return this.visibleCategoryCount < this.displayCategories.length;
+        },
+        hasMoreBrands() {
+            return this.visibleBrandCount < this.uniqueBrands.length;
+        },
+        getSortIcon(value) {
+            if (this.sortBy !== value) return '';
+            return this.sortDirection === 'asc' ? 'fas fa-sort-numeric-down' : 'fas fa-sort-numeric-up';
         }
     },
     watch: {
@@ -237,59 +242,60 @@ export default {
         }
     },
     methods: {
-        fetchCategories() {
-            api.get("/category")
-                .then(response => {
-                    this.categories = response.data;
-                })
-                .catch(error => {
-                    console.error("Error fetching categories:", error);
-                });
+        async fetchCategories() {
+            try {
+                const response = await api.get("/category/");
+                this.displayCategories = response.data;
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
         },
-        fetchProducts() {
+        async fetchProducts() {
             this.loading = true;
-            
             const params = new URLSearchParams();
+
             if (this.searchQuery) {
                 params.append('search', this.searchQuery);
             }
-            if (this.pendingFilters.categories.length > 0) {
-                this.pendingFilters.categories.forEach(cat => {
-                    params.append('category', cat);
+
+            if (this.selectedCategories.length > 0) {
+                const selectedCategoryNames = this.selectedCategories
+                    .map(categoryId => {
+                        const category = this.displayCategories.find(cat => cat.category_id === categoryId);
+                        return category ? category.category_name : null;
+                    })
+                    .filter(name => name !== null);
+                
+                selectedCategoryNames.forEach(categoryName => {
+                    params.append('category', categoryName);
                 });
             }
-            if (this.pendingFilters.brands.length > 0) {
-                this.pendingFilters.brands.forEach(brand => {
+
+            if (this.selectedBrands.length > 0) {
+                this.selectedBrands.forEach(brand => {
                     params.append('brand', brand);
                 });
             }
-            if (this.pendingFilters.priceRange.min) {
-                params.append('min_price', this.pendingFilters.priceRange.min);
-            }
-            if (this.pendingFilters.priceRange.max) {
-                params.append('max_price', this.pendingFilters.priceRange.max);
-            }
-            if (this.sortBy) {
-                const sortFieldMap = {
-                    'name': 'name',
-                    'price': 'price',
-                    'sold_products': 'sold_products'
-                };
-                params.append('sort', sortFieldMap[this.sortBy] || 'name');
-                params.append('direction', this.sortDirection);
-            }
 
-            api.get(`/products/?${params.toString()}`)
-                .then(response => {
-                    this.products = response.data;
-                    this.currentPage = 1;
-                })
-                .catch(error => {
-                    console.error("Error fetching products:", error);
-                })
-                .finally(() => {
-                    this.loading = false;
-                });
+            let orderingField = this.sortBy;
+            if (this.sortDirection === 'desc') {
+                orderingField = `-${orderingField}`;
+            }
+            params.append('ordering', orderingField);
+
+            try {
+                const response = await api.get(`/products/?${params.toString()}`);
+                this.products = response.data;
+                this.currentPage = 1;
+                
+                if (!this.uniqueBrands.length) {
+                    this.uniqueBrands = [...new Set(response.data.map(product => product.brand))];
+                }
+            } catch (error) {
+                console.error("Error fetching products:", error);
+            } finally {
+                this.loading = false;
+            }
         },
         nextPage() {
             if (this.currentPage < this.totalPages) {
@@ -314,25 +320,37 @@ export default {
             this.fetchProducts();
         },
         toggleCategories() {
-            this.showAllCategories = !this.showAllCategories;
+            if (this.visibleCategoryCount < this.displayCategories.length) {
+                this.visibleCategoryCount += 5;
+            } else {
+                this.visibleCategoryCount = 5;
+            }
         },
         toggleBrands() {
-            this.showAllBrands = !this.showAllBrands;
+            if (this.visibleBrandCount < this.uniqueBrands.length) {
+                this.visibleBrandCount += 5;
+            } else {
+                this.visibleBrandCount = 5;
+            }
         },
         toggleSortDropdown() {
             this.sortDropdownOpen = !this.sortDropdownOpen;
         },
-        getSortIcon(value) {
-            if (this.sortBy !== value) return '';
-            
-            if (value === 'name') {
-                return this.sortDirection === 'asc' ? 'fas fa-sort-alpha-down' : 'fas fa-sort-alpha-up';
-            }
-            return this.sortDirection === 'asc' ? 'fas fa-sort-numeric-down' : 'fas fa-sort-numeric-up';
-        },
         clearPriceRange() {
             this.priceRange.min = null;
             this.priceRange.max = null;
+            this.applyFilters();
+        },
+        handlePriceChange() {
+            if (this.priceRange.min && this.priceRange.max) {
+                if (this.priceRange.min > this.priceRange.max) {
+                    this.priceRange.max = this.priceRange.min;
+                }
+            }
+            
+            if (this.priceRange.min < 0) this.priceRange.min = 0;
+            if (this.priceRange.max < 0) this.priceRange.max = 0;
+            
             this.applyFilters();
         },
         applyFilters() {
@@ -353,6 +371,8 @@ export default {
                 min: null,
                 max: null
             };
+            this.sortBy = '';
+            this.sortDirection = '';
             this.pendingFilters = {
                 categories: [],
                 brands: [],
@@ -362,14 +382,28 @@ export default {
                 }
             };
             this.fetchProducts();
+        },
+        closeDropdown(e) {
+            if (!e.target.closest('.relative')) {
+                this.sortDropdownOpen = false;
+            }
         }
     },
     created() {
         this.fetchCategories();
+    },
+    mounted() {
+        document.addEventListener('click', this.closeDropdown);
+    },
+    beforeUnmount() {
+        document.removeEventListener('click', this.closeDropdown);
     }
 };
 </script>
 
 <style>
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
+.z-10 {
+    z-index: 10;
+}
 </style>
