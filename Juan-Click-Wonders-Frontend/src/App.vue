@@ -9,7 +9,7 @@ import NavBar from "./components/NavBar.vue";
   </div>
   <footer class="bg-gray-900 text-white py-6 w-full mt-auto">
     <div class="container mx-auto text-center sticky top-[100vh]">
-      <p>© 2025 Your Website. All rights reserved.</p>
+      <p>© 2025 Juan Click Wonders. All rights reserved.</p>
     </div>
   </footer>
 </template>
