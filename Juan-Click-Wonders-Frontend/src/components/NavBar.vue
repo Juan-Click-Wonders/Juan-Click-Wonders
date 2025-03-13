@@ -57,7 +57,12 @@ export default {
     },
     methods: {
         handleSearch() {
-            if (this.searchQuery.trim()) {
+            // If search is empty or only whitespace, remove search parameter
+            if (!this.searchQuery || !this.searchQuery.trim()) {
+                this.$router.push({
+                    path: '/product_list'
+                });
+            } else {
                 this.$router.push({
                     path: '/product_list',
                     query: { search: this.searchQuery.trim() }
