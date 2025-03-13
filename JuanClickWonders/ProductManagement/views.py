@@ -12,6 +12,40 @@ class ProductListCreateApi(generics.ListCreateAPIView):
     search_fields = ['name', 'brand', 'category__category_name'] 
     ordering_fields = ['price', 'sold_products']
 
+    def get_queryset(self):
+        queryset = Products.objects.all()
+        
+        search_query = self.request.query_params.get('search', '')
+        if search_query:
+            queryset = queryset.filter(name__icontains=search_query)
+
+        categories = self.request.query_params.getlist('category')
+        if categories:
+            queryset = queryset.filter(category__category_name__in=categories)
+
+        brands = self.request.query_params.getlist('brand')
+        if brands:
+            queryset = queryset.filter(brand__in=brands)
+
+        min_price = self.request.query_params.get('min_price')
+        max_price = self.request.query_params.get('max_price')
+        
+        if min_price:
+            try:
+                min_price = float(min_price)
+                queryset = queryset.filter(price__gte=min_price)
+            except (ValueError, TypeError):
+                pass
+            
+        if max_price:
+            try:
+                max_price = float(max_price)
+                queryset = queryset.filter(price__lte=max_price)
+            except (ValueError, TypeError):
+                pass
+        
+        return queryset.distinct()
+
 class ProductDetailApi(generics.RetrieveUpdateDestroyAPIView):
     queryset = Products.objects.all()
     serializer_class = ProductsSerializer
