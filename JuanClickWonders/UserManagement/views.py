@@ -63,6 +63,11 @@ class LoginView(APIView):
             samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
         )
 
+        response.data['set_cookies'] = {
+            "access_token": str(refresh.access_token),
+            "refresh_token": str(refresh)
+        }
+        
         return response
 
 

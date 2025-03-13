@@ -11,7 +11,7 @@
                         </a>
                     </div>
                     <!-- Search Bar -->
-                    <div class="flex-1 max-w-7xl mx-4 relative flex items-center">
+                    <div v-if="!isAuthPage" class="flex-1 max-w-7xl mx-4 relative flex items-center">
                         <div class="w-full relative">
                             <input type="text" placeholder="Search Products"
                                 class="w-full !py-3 !pl-5 !pr-12 bg-white rounded-full text-gray-800 focus:outline-none" />
@@ -37,7 +37,8 @@
 
                     <!-- Login Link -->
                     <div>
-                        <a href="#" class="font-medium hover:text-gray-300 !mx-25">LOGIN</a>
+                        <a v-if="!isLoggedIn" href="/auth/login/" class="font-medium hover:text-gray-300 !mx-25">LOGIN</a>
+                        <a v-else  href="/profile/" class="font-medium hover:text-gray-300 !mx-25">PROFILE</a>
                     </div>
                 </div>
 
@@ -45,11 +46,30 @@
                 <nav class="flex justify-end !py-2 !mx-25">
                     <div class="flex !space-x-8 font-medium">
                         <a href="/" class="hover:text-gray-300">HOME</a>
-                        <a href="/product_list" class="hover:text-gray-300">SHOP</a>
-                        <a href="/about" class="hover:text-gray-300">ABOUT</a>
+                        <a href="/product_list/" class="hover:text-gray-300">SHOP</a>
+                        <a href="/about/" class="hover:text-gray-300">ABOUT</a>
                     </div>
                 </nav>
             </div>
         </header>
     </div>
 </template>
+
+<script>
+import { useRoute } from "vue-router";
+import { computed } from "vue";
+
+export default {
+    setup() {
+        const route = useRoute();
+        const isAuthPage = computed(() => ["login", "register", "forgot-password"].includes(route.name));
+
+        return { isAuthPage };
+    },
+  computed: {
+    isLoggedIn() {
+      return !!localStorage.getItem('token'); 
+    }
+  }
+};
+</script>

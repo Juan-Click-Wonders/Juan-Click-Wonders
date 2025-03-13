@@ -10,36 +10,55 @@ const routes =[
     {
       path: '/about',
       name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
     {
       path: '/',
       name: 'home',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
       component: () => import('../views/Homepage.vue'),
+    },
+    {
+      path: '/auth/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue'),
+    },
+    {
+      path: '/auth/register',
+      name: 'register',
+      component: () => import('../views/RegisterView.vue'),
+    },
+    {
+      path: '/auth/forgot-password',
+      name: 'forgot-password',
+      component: () => import('../views/ForgotPassword.vue'),
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('../views/ProfilePage.vue'),
+    },
+    {
+      path: '/profile/edit',
+      name: 'profile-edit',
+      component: () => import('../views/EditProfile.vue'),
+    },
+    {
+      path: '/profile/update-password',
+      name: 'update-password',
+      component: () => import('../views/UpdatePassword.vue'),
     },
     {
       path: '/product_list',
       name: 'product_list',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
       component: () => import('../views/ProductList.vue'),
     },
     {
       path: '/product/:id',
       name: 'product',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
       component: () => import('../views/ProductDetail.vue'),
       props: true,
     },
+    
   ];
 
 const router = createRouter({
