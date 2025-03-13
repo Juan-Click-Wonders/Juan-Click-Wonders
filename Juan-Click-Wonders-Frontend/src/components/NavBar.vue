@@ -14,7 +14,9 @@
                                 v-model="searchQuery"
                                 @keyup.enter="handleSearch"
                                 class="w-full !py-3 !pl-5 !pr-12 bg-white rounded-full text-gray-800 focus:outline-none" />
-                            <button class="absolute right-0 top-0 h-full !px-4 flex items-center">
+                            <button 
+                                @click="handleSearch"
+                                class="absolute right-0 top-0 h-full !px-4 flex items-center hover:text-gray-600 cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
