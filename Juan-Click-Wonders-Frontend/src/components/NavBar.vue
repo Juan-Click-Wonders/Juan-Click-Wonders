@@ -1,5 +1,5 @@
 <template>
-    <div class="flex-grow">
+    <div>
         <!-- Header -->
         <header class="bg-gray-900 text-white">
             <div class="w-full px-4">
@@ -14,8 +14,10 @@
                     <div class="flex-1 max-w-7xl mx-4 relative flex items-center">
                         <div class="w-full relative">
                             <input type="text" placeholder="Search Products"
+                                v-model="searchQuery"
+                                @keyup.enter="handleSearch"
                                 class="w-full !py-3 !pl-5 !pr-12 bg-white rounded-full text-gray-800 focus:outline-none" />
-                            <button class="absolute right-0 top-0 h-full !px-4 flex items-center">
+                            <button @click="handleSearch" class="absolute right-0 top-0 h-full !px-4 flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -53,3 +55,23 @@
         </header>
     </div>
 </template>
+
+<script>
+export default {
+    data() {
+        return {
+            searchQuery: ''
+        }
+    },
+    methods: {
+        handleSearch() {
+            if (this.searchQuery.trim()) {
+                this.$router.push({
+                    path: '/product_list',
+                    query: { search: this.searchQuery.trim() }
+                });
+            }
+        }
+    }
+}
+</script>
