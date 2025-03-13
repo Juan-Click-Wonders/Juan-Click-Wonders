@@ -1,7 +1,7 @@
 <template>
     <div class="w-full mx-auto mt-8">
         <div class="flex rounded-xl mx-4">
-            <aside class="w-64 p-4 border-black border-2 rounded-xl h-fit">
+            <aside class="w-64 p-4 border-black border-2 rounded-xl h-fit mb-4">
                 <!-- Sidebar -->
                 <div class="mb-6">
                     <h2 class="text-xl font-semibold mb-2">Filter by Category</h2>
@@ -98,7 +98,7 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             <span class="text-gray-700 font-medium">
-                                {{ currentPage }}/{{ totalPages }}
+                                {{ products.length === 0 ? '0/0' : `${currentPage}/${totalPages}` }}
                             </span>
                             <div class="flex space-x-1">
                                 <button @click="previousPage" :disabled="currentPage === 1" class="px-2 py-1 bg-blue-500 text-white rounded-lg disabled:bg-gray-300 hover:bg-blue-600" :style="{ cursor: currentPage === 1 ? 'not-allowed' : 'pointer', pointerEvents: currentPage === 1 ? 'none' : 'auto' }">
@@ -153,10 +153,10 @@ export default {
             selectedBrands: [],
             searchQuery: '',
             currentPage: 1,
-            productsPerPage: 18,
+            productsPerPage: 20,
             loading: false,
-            sortBy: 'price',
-            sortDirection: 'asc',
+            sortBy: 'sold_products',
+            sortDirection: 'desc',
             showAllCategories: false,
             showAllBrands: false,
             sortDropdownOpen: false,
@@ -298,9 +298,7 @@ export default {
                 this.products = response.data;
                 this.currentPage = 1;
                 
-                if (!this.uniqueBrands.length) {
-                    this.uniqueBrands = [...new Set(response.data.map(product => product.brand))];
-                }
+                this.uniqueBrands = [...new Set(response.data.map(product => product.brand))];
             } catch (error) {
                 console.error("Error fetching products:", error);
             } finally {
@@ -388,8 +386,8 @@ export default {
                 min: null,
                 max: null
             };
-            this.sortBy = 'price';
-            this.sortDirection = 'asc';
+            this.sortBy = 'sold_products';
+            this.sortDirection = 'desc';
             this.pendingFilters = {
                 categories: [],
                 brands: [],
