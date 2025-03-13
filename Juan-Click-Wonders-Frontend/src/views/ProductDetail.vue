@@ -1,10 +1,12 @@
 <template>
     <div class="container mx-auto p-6">
         <!-- Back to Catalog -->
-        <button @click="$router.push('/product_list')"
-            class="mb-4 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-900">
+        <router-link 
+            to="/product_list"
+            class="inline-block mb-4 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-900 cursor-pointer"
+        >
             ← Back to Catalog
-        </button>
+        </router-link>
 
         <div v-if="product" class="flex gap-8 mt-4">
             <!-- Product Image -->
@@ -24,7 +26,7 @@
                 <h2 class="text-3xl font-bold mt-1">{{ product.name }}</h2>
 
                 <!-- Ratings -->
-                <div v-if="ratings.length > 0" class="mt-4">
+                <!-- <div v-if="ratings.length > 0" class="mt-4">
                     <h3 class="font-semibold mb-2">Customer Reviews</h3>
                     <div v-for="rating in ratings" :key="rating.rating_id" class="mb-4 p-4 bg-gray-50 rounded">
                         <div class="flex items-center text-yellow-500">
@@ -36,7 +38,7 @@
                         </div>
                         <p class="mt-2 text-gray-700">{{ rating.description }}</p>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- Brand -->
                 <p class="text-gray-700 mt-4">Brand: {{ product.brand }}</p>
@@ -100,9 +102,8 @@ export default {
     },
     computed: {
         categoryName() {
-            if (!this.product || !this.categories.length) return 'Loading...';
-            const category = this.categories.find(cat => cat.category_id === this.product.category);
-            return category ? category.category_name : 'Unknown Category';
+            if (!this.product) return 'Loading...';
+            return this.product.category_name || 'Unknown Category';
         }
     },
     methods: {
