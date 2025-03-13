@@ -1,12 +1,9 @@
 from django.urls import path
-from ProductManagement import views
-
-# from django.conf.urls.static import static
-# from django.conf import settings
+from ProductManagement.views import ProductListCreateApi, ProductDetailApi, CategoryListCreateApi, CategoryDetailApi
 
 urlpatterns = [
-    path("products/", views.productsApi, name="product_list"),
-    path("products/<int:id>", views.productsApi, name="product_detail"),
-    path("category/", views.categoryApi, name="category_list"),
-    path("category/<int:id>", views.categoryApi, name="category_detail"),
+    path("products/", ProductListCreateApi.as_view(), name="product_list"),
+    path("products/<int:product_id>", ProductDetailApi.as_view(), name="product_detail"),
+    path("category/", CategoryListCreateApi.as_view(), name="category_list"),
+    path("category/<int:category_id>", CategoryDetailApi.as_view(), name="category_detail"),
 ]
