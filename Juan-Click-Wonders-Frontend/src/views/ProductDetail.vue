@@ -58,10 +58,10 @@
                         <input type="text" v-model="quantity"
                             class="w-10 text-center bg-transparent focus:outline-none text-lg font-semibold" readonly>
                         <div class="absolute right-3 flex flex-col">
-                            <button @click="increaseQuantity" class="text-gray-700 hover:text-black leading-none">
+                            <button @click="increaseQuantity" class="text-gray-700 hover:text-black cursor-pointer">
                                 <i class="fas fa-chevron-up"></i>
                             </button>
-                            <button @click="decreaseQuantity" class="text-gray-700 hover:text-black leading-none">
+                            <button @click="decreaseQuantity" class="text-gray-700 hover:text-black cursor-pointer">
                                 <i class="fas fa-chevron-down"></i>
                             </button>
                         </div>
@@ -82,7 +82,6 @@
 <script>
 import axios from "axios";
 
-// Create an axios instance with the base URL
 const api = axios.create({
     baseURL: 'http://127.0.0.1:8000',
     headers: {
@@ -115,7 +114,7 @@ export default {
             return new Date(dateString).toLocaleDateString();
         },
         fetchCategories() {
-            api.get("/api/products/categories/")
+            api.get("/api/products/category")
                 .then(response => {
                     this.categories = response.data;
                 })
@@ -125,7 +124,7 @@ export default {
         },
         fetchProduct() {
             const productId = this.$route.params.id;
-            api.get(`/api/products/product-detail/${productId}/`)
+            api.get(`/api/products/${productId}`)
                 .then(response => {
                     this.product = response.data;
                     this.fetchRatings(productId);
@@ -135,7 +134,7 @@ export default {
                 });
         },
         fetchRatings(productId) {
-            api.get(`/api/products/${productId}/ratings/`)
+            api.get(`/api/products/ratings/${productId}`)
                 .then(response => {
                     this.ratings = response.data;
                 })
