@@ -10,7 +10,7 @@ class ProductListCreateApi(generics.ListCreateAPIView):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     
     search_fields = ['name', 'brand', 'category__category_name'] 
-    ordering_fields = ['price']
+    ordering_fields = ['price', 'sold_products']
 
 class ProductDetailApi(generics.RetrieveUpdateDestroyAPIView):
     queryset = Products.objects.all()
