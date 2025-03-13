@@ -11,9 +11,11 @@ from ProductManagement.serializers import ProductsSerializer, CategorySerializer
 def productsApi(request, id=0):
     if request.method == "GET":
         if id != 0:
-            product = Products.objects.filter(product_ID=id).first()
+            product = Products.objects.filter(product_id=id).first()
             if product:
-                product_serializer = ProductsSerializer(product)
+                product_serializer = ProductsSerializer(
+                    product, context={"request": request}
+                )
                 return JsonResponse(product_serializer.data, safe=False)
             return JsonResponse({"error": "Product not found"}, status=404)
         products = Products.objects.all()
@@ -81,7 +83,7 @@ def productsApi(request, id=0):
         return JsonResponse({"error": product_serializer.errors}, status=400)
 
     elif request.method == "DELETE":
-        product = Products.objects.filter(product_ID=id).first()
+        product = Products.objects.filter(product_id=id).first()
         if not product:
             return JsonResponse({"error": "Product not found"}, status=404)
 

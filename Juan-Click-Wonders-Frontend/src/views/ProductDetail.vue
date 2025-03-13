@@ -108,13 +108,13 @@ export default {
     methods: {
         getImageUrl(imagePath) {
             if (!imagePath) return null;
-            return `http://127.0.0.1:8000/media/product_images/${imagePath}`;
+            return imagePath;
         },
         formatDate(dateString) {
             return new Date(dateString).toLocaleDateString();
         },
         fetchCategories() {
-            api.get("/api/products/category")
+            api.get("/category")
                 .then(response => {
                     this.categories = response.data;
                 })
@@ -124,7 +124,7 @@ export default {
         },
         fetchProduct() {
             const productId = this.$route.params.id;
-            api.get(`/api/products/${productId}`)
+            api.get(`/products/${productId}`)
                 .then(response => {
                     this.product = response.data;
                     this.fetchRatings(productId);
@@ -134,7 +134,7 @@ export default {
                 });
         },
         fetchRatings(productId) {
-            api.get(`/api/products/ratings/${productId}`)
+            api.get(`/products/ratings/${productId}`)
                 .then(response => {
                     this.ratings = response.data;
                 })
