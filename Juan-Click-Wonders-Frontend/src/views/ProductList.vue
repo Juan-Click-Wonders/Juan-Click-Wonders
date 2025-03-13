@@ -101,11 +101,11 @@
                                 {{ products.length === 0 ? '0/0' : `${currentPage}/${totalPages}` }}
                             </span>
                             <div class="flex space-x-1">
-                                <button @click="previousPage" :disabled="currentPage === 1" class="px-2 py-1 bg-blue-500 text-white rounded-lg disabled:bg-gray-300 hover:bg-blue-600" :style="{ cursor: currentPage === 1 ? 'not-allowed' : 'pointer', pointerEvents: currentPage === 1 ? 'none' : 'auto' }">
+                                <button @click="previousPage" :disabled="currentPage === 1 || products.length === 0" class="px-2 py-1 bg-blue-500 text-white rounded-lg disabled:bg-gray-300 hover:bg-blue-600" :style="{ cursor: currentPage === 1 || products.length === 0 ? 'not-allowed' : 'pointer', pointerEvents: currentPage === 1 || products.length === 0 ? 'none' : 'auto' }">
                                     <i class="fas fa-chevron-left text-sm"></i>
                                 </button>
 
-                                <button @click="nextPage" :disabled="currentPage === totalPages" class="px-2 py-1 bg-blue-500 text-white rounded-lg disabled:bg-gray-300 hover:bg-blue-600" :style="{ cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', pointerEvents: currentPage === totalPages ? 'none' : 'auto' }">
+                                <button @click="nextPage" :disabled="currentPage === totalPages || products.length === 0" class="px-2 py-1 bg-blue-500 text-white rounded-lg disabled:bg-gray-300 hover:bg-blue-600" :style="{ cursor: currentPage === totalPages || products.length === 0 ? 'not-allowed' : 'pointer', pointerEvents: currentPage === totalPages || products.length === 0 ? 'none' : 'auto' }">
                                     <i class="fas fa-chevron-right text-sm"></i>
                                 </button>
                             </div>
