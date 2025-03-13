@@ -155,8 +155,8 @@ export default {
             currentPage: 1,
             productsPerPage: 18,
             loading: false,
-            sortBy: '',
-            sortDirection: '',
+            sortBy: 'price',
+            sortDirection: 'asc',
             showAllCategories: false,
             showAllBrands: false,
             sortDropdownOpen: false,
@@ -254,10 +254,12 @@ export default {
             this.loading = true;
             const params = new URLSearchParams();
 
+            // Text search for product name
             if (this.searchQuery) {
                 params.append('search', this.searchQuery);
             }
 
+            // Multiple category filter
             if (this.selectedCategories.length > 0) {
                 const selectedCategoryNames = this.selectedCategories
                     .map(categoryId => {
@@ -271,10 +273,18 @@ export default {
                 });
             }
 
+            // Multiple brand filter
             if (this.selectedBrands.length > 0) {
                 this.selectedBrands.forEach(brand => {
                     params.append('brand', brand);
                 });
+            }
+
+            if (this.priceRange.min !== null && this.priceRange.min !== '') {
+                params.append('min_price', this.priceRange.min);
+            }
+            if (this.priceRange.max !== null && this.priceRange.max !== '') {
+                params.append('max_price', this.priceRange.max);
             }
 
             let orderingField = this.sortBy;
@@ -320,15 +330,15 @@ export default {
             this.fetchProducts();
         },
         toggleCategories() {
-            if (this.visibleCategoryCount < this.displayCategories.length) {
-                this.visibleCategoryCount += 5;
+            if (this.visibleCategoryCount === 5) {
+                this.visibleCategoryCount = this.displayCategories.length;
             } else {
                 this.visibleCategoryCount = 5;
             }
         },
         toggleBrands() {
-            if (this.visibleBrandCount < this.uniqueBrands.length) {
-                this.visibleBrandCount += 5;
+            if (this.visibleBrandCount === 5) {
+                this.visibleBrandCount = this.uniqueBrands.length;
             } else {
                 this.visibleBrandCount = 5;
             }
@@ -336,22 +346,29 @@ export default {
         toggleSortDropdown() {
             this.sortDropdownOpen = !this.sortDropdownOpen;
         },
+        handlePriceChange() {
+            let min = parseFloat(this.priceRange.min);
+            let max = parseFloat(this.priceRange.max);
+
+            // Handle NaN cases
+            if (isNaN(min)) min = null;
+            if (isNaN(max)) max = null;
+
+            // Ensure min doesn't exceed max
+            if (min !== null && max !== null && min > max) {
+                this.priceRange.max = this.priceRange.min;
+            }
+
+            // Ensure non-negative values
+            if (min !== null && min < 0) this.priceRange.min = 0;
+            if (max !== null && max < 0) this.priceRange.max = 0;
+
+            this.fetchProducts();
+        },
         clearPriceRange() {
             this.priceRange.min = null;
             this.priceRange.max = null;
-            this.applyFilters();
-        },
-        handlePriceChange() {
-            if (this.priceRange.min && this.priceRange.max) {
-                if (this.priceRange.min > this.priceRange.max) {
-                    this.priceRange.max = this.priceRange.min;
-                }
-            }
-            
-            if (this.priceRange.min < 0) this.priceRange.min = 0;
-            if (this.priceRange.max < 0) this.priceRange.max = 0;
-            
-            this.applyFilters();
+            this.fetchProducts();
         },
         applyFilters() {
             this.pendingFilters = {
@@ -371,8 +388,8 @@ export default {
                 min: null,
                 max: null
             };
-            this.sortBy = '';
-            this.sortDirection = '';
+            this.sortBy = 'price';
+            this.sortDirection = 'asc';
             this.pendingFilters = {
                 categories: [],
                 brands: [],
