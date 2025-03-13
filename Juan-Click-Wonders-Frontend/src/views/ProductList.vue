@@ -39,7 +39,7 @@
                         <div class="mt-4">
                             <h3 class="font-bold truncate">{{ product.name }}</h3>
                             <p class="text-gray-700 font-semibold">₱{{ product.price.toLocaleString() }}</p>
-                            <p class="text-sm text-gray-600">Category: {{ product.categoryName }}</p>
+                            <p class="text-sm text-gray-600">Category: {{ product.category_name }}</p>
                             <p class="text-sm text-gray-600">Brand: {{ product.brand }}</p>
                             <p class="text-sm text-gray-600">Stock: {{ product.stock }}</p>
                         </div>
@@ -105,12 +105,9 @@ export default {
         };
     },
     computed: {
-        // Map products with category names
+        // Remove the mapping since category_name is already in the response
         productsWithCategories() {
-            return this.products.map(product => ({
-                ...product,
-                categoryName: this.getCategoryName(product.category)
-            }));
+            return this.products; // No need to map, category_name is already included
         },
         displayCategories() {
             return this.categories.map(category => ({
@@ -124,9 +121,9 @@ export default {
         filteredProducts() {
             const searchTerm = this.searchQuery.toLowerCase();
             return this.productsWithCategories.filter(product => {
-                // Category filter
+                // Category filter - ensure we're comparing numbers with numbers
                 const matchesCategory = this.selectedCategories.length === 0 ||
-                    this.selectedCategories.includes(product.category);
+                    this.selectedCategories.includes(Number(product.category_id));
                 
                 // Brand filter
                 const matchesBrand = this.selectedBrands.length === 0 ||
@@ -135,7 +132,7 @@ export default {
                 // Simplified search matching
                 const matchesSearch = !this.searchQuery || (
                     product.name.toLowerCase().includes(searchTerm) ||
-                    product.categoryName.toLowerCase().includes(searchTerm)
+                    product.category_name.toLowerCase().includes(searchTerm)
                 );
 
                 return matchesCategory && matchesBrand && matchesSearch;
@@ -166,32 +163,39 @@ export default {
         },
         getImageUrl(imagePath) {
             if (!imagePath) return null;
+            // If the imagePath is already a full URL, return it as is
+            if (imagePath.startsWith('http')) {
+                return imagePath;
+            }
+            // Otherwise, construct the full URL
             return `http://127.0.0.1:8000/media/product_images/${imagePath}`;
         },
         handleImageError(productId) {
-            console.error(`Failed to load image for product ${productId}`);
             const product = this.products.find(p => p.product_id === productId);
             if (product) {
-                console.error('Failed URL:', product.image_url);
+                fetch(this.getImageUrl(product.image_url))
+                    .catch(() => {
+                        this.imageLoadErrors[productId] = true;
+                    });
             }
             this.imageLoadErrors[productId] = true;
         },
         fetchCategories() {
-            api.get("/api/products/category")
+            api.get("/category")
                 .then(response => {
                     this.categories = response.data;
                 })
                 .catch(error => {
-                    console.error("Error fetching categories:", error);
+                    // Consider adding user-friendly error handling here
                 });
         },
         fetchProducts() {
-            api.get("/api/products/product-list/")
+            api.get("/products/")
                 .then(response => {
                     this.products = response.data;
                 })
                 .catch(error => {
-                    console.error("Error fetching products:", error);
+                    // Consider adding user-friendly error handling here
                 });
         },
         nextPage() {

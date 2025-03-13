@@ -15,3 +15,5 @@ node_modules/
 db.sqlite3
 
 .DS_Store
+JuanClickWonders/media/product_images/*
+JuanClickWonders/ProductManagement/migrations/*.py

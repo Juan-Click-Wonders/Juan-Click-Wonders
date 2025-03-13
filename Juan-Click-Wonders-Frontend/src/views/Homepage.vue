@@ -10,14 +10,14 @@
                     <p class="text-lg">Price starting at ₱40,000</p>
                     <button
                         class="bg-black text-white !px-8 !py-3 rounded-md font-semibold hover:bg-gray-800 transition-colors">
-                        <a href="#">BUY NOW</a>
+                        <a href="http://localhost:5173/product/14">BUY NOW</a>
                     </button>
                 </div>
 
                 <!-- Image with Title -->
                 <div class="w-1/2">
                     <h1 class="text-4xl font-bold mb-6 text-center">
-                        AMD Radeon RX 9070 XT
+                        AMD Radeon RX 6800 XT
                     </h1>
                     <img src="https://www.amd.com/content/dam/amd/en/images/products/graphics/radeon-rx-9070/2922918-radeon-rx-9070xt-product.jpg"
                         alt="AMD Radeon RX 9070 XT Graphics Card" class="w-full h-auto object-contain" />
