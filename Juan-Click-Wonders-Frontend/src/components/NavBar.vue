@@ -1,21 +1,22 @@
 <template>
-    <div class="flex-grow">
-        <!-- Header -->
+    <div>
         <header class="bg-gray-900 text-white">
             <div class="w-full px-4">
-                <!-- Top Bar with Logo, Search, Cart and Login -->
                 <div class="flex items-center justify-between">
                     <div class="!h-full !py-2 !mx-25">
                         <a href="/">
                             <img src="/icon.png" alt="Logo" class="!h-16 !w-16 object-contain">
                         </a>
                     </div>
-                    <!-- Search Bar -->
                     <div class="flex-1 max-w-7xl mx-4 relative flex items-center">
                         <div class="w-full relative">
                             <input type="text" placeholder="Search Products"
+                                v-model="searchQuery"
+                                @keyup.enter="handleSearch"
                                 class="w-full !py-3 !pl-5 !pr-12 bg-white rounded-full text-gray-800 focus:outline-none" />
-                            <button class="absolute right-0 top-0 h-full !px-4 flex items-center">
+                            <button 
+                                @click="handleSearch"
+                                class="absolute right-0 top-0 h-full !px-4 flex items-center hover:text-gray-600 cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -23,7 +24,6 @@
                                 </svg>
                             </button>
                         </div>
-                        <!-- Cart Icon -->
                         <div class="!ml-4">
                             <a href="#" class="flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -34,14 +34,10 @@
                             </a>
                         </div>
                     </div>
-
-                    <!-- Login Link -->
                     <div>
                         <a href="#" class="font-medium hover:text-gray-300 !mx-25">LOGIN</a>
                     </div>
                 </div>
-
-                <!-- Bottom Navigation -->
                 <nav class="flex justify-end !py-2 !mx-25">
                     <div class="flex !space-x-8 font-medium">
                         <a href="/" class="hover:text-gray-300">HOME</a>
@@ -53,3 +49,31 @@
         </header>
     </div>
 </template>
+
+<script>
+export default {
+    data() {
+        return {
+            searchQuery: '',
+        }
+    },
+    methods: {
+        handleSearch() {
+            // If search is empty or only whitespace, remove search parameter
+            if (!this.searchQuery || !this.searchQuery.trim()) {
+                this.$router.push({
+                    path: '/product_list'
+                });
+            } else {
+                this.$router.push({
+                    path: '/product_list',
+                    query: { search: this.searchQuery.trim() }
+                });
+            }
+        }
+    }
+}
+</script>
+
+<style scoped>
+</style>
