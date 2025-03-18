@@ -27,6 +27,8 @@
   </template>
   
   <script>
+  import axios from "axios";
+
   export default {
     data() {
       return {
@@ -36,8 +38,32 @@
       };
     },
     methods: {
-      updatePassword() {
-        console.log('Password updated');
+      async updatePassword() {
+        try {
+          const response = await axios.put("http://127.0.0.1:8000/api/user/update-password/", {
+            current_password: this.currentPassword,
+            new_password: this.newPassword,
+            confirm_new_password: this.confirmNewPassword
+          }, {
+            withCredentials: true
+          });
+
+          if (response.status === 200) {
+            alert("Password updated successfully!");
+            this.$router.push("/profile/");
+          }
+        } catch (error) {
+          console.error("Password update error:", error);
+          let errorMessage = "Failed to update password. ";
+          if (error.response?.data?.current_password) {
+            errorMessage += error.response.data.current_password[0];
+          } else if (error.response?.data?.new_password) {
+            errorMessage += error.response.data.new_password[0];
+          } else {
+            errorMessage += "Please try again.";
+          }
+          alert(errorMessage);
+        }
       }
     }
   };

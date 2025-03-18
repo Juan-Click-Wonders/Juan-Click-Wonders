@@ -76,6 +76,7 @@
         try {
           const response = await axios.post("http://127.0.0.1:8000/api/auth/register/", userData);
           if (response.status === 201) {
+            alert("Registered successfully!");
             this.$router.push("/auth/login/");
           }
         } catch (error) {

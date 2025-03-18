@@ -24,27 +24,40 @@
   </div>
 </template>
   
-  <script>
-  import axios from "axios";
-  
-  export default {
-    data() {
-      return {
-        email: "",
-      };
-    },
-    methods: {
-      async forgotPassword() {
-        try {
-          await axios.post("http://127.0.0.1:8000/auth/forgot-password/", { email: this.email });
-          alert("Check your email for reset instructions.");
-        } catch (error) {
-          alert("Error sending reset link.");
+<script>
+import axios from "axios";
+
+export default {
+  data() {
+    return {
+      email: "",
+    };
+  },
+  methods: {
+    async resetPassword() {
+      try {
+        const response = await axios.post("http://127.0.0.1:8000/api/auth/forgot-password/", {
+          email: this.email
+        });
+        
+        if (response.status === 200) {
+          alert("Password reset instructions have been sent to your email.");
+          this.$router.push("/auth/login/");
         }
-      },
+      } catch (error) {
+        console.error("Password reset error:", error);
+        let errorMessage = "Failed to send reset instructions. ";
+        if (error.response?.data?.email) {
+          errorMessage += error.response.data.email[0];
+        } else {
+          errorMessage += "Please try again.";
+        }
+        alert(errorMessage);
+      }
     },
-  };
-  </script>
+  },
+};
+</script>
 
 <style scoped>
 input:focus {

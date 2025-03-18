@@ -32,6 +32,8 @@
   </template>
   
   <script>
+  import axios from "axios";
+
   export default {
     data() {
       return {
@@ -41,9 +43,51 @@
         currentPassword: ''
       };
     },
+    async created() {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/api/profile/", {
+          withCredentials: true
+        });
+        
+        const profile = response.data;
+        this.phoneNumber = profile.phone_number;
+        this.address = profile.address;
+        this.email = profile.email;
+      } catch (error) {
+        console.error("Error loading profile:", error);
+        if (error.response?.status === 401) {
+          this.$router.push("/auth/login/");
+        }
+      }
+    },
     methods: {
-      updateProfile() {
-        console.log('Profile updated');
+      async updateProfile() {
+        try {
+          const response = await axios.put("http://127.0.0.1:8000/api/profile/update/", {
+            phone_number: this.phoneNumber,
+            address: this.address,
+            email: this.email,
+            current_password: this.currentPassword
+          }, {
+            withCredentials: true
+          });
+
+          if (response.status === 200) {
+            alert("Profile updated successfully!");
+            this.$router.push("/profile/");
+          }
+        } catch (error) {
+          console.error("Profile update error:", error);
+          let errorMessage = "Failed to update profile. ";
+          if (error.response?.data?.current_password) {
+            errorMessage += error.response.data.current_password[0];
+          } else if (error.response?.data?.email) {
+            errorMessage += error.response.data.email[0];
+          } else {
+            errorMessage += "Please try again.";
+          }
+          alert(errorMessage);
+        }
       }
     }
   };

@@ -6,20 +6,34 @@
       </div>
       <div class="p-8">
         <h3 class="text-xl font-medium text-gray-900">Your Information</h3>
-        <div class="mt-4">
-          <div v-for="(value, label) in user" :key="label" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">{{ label }}:</label>
-            <div class="mt-1 block w-full px-4 py-2 border rounded-full shadow-sm bg-gray-200 text-gray-700">
+        <div class="mt-4 space-y-2 -ml-4">
+          <div v-for="(value, label) in user" :key="label" class="flex items-center">
+            <label class="text-sm font-medium text-gray-700 min-w-[70px] mr-3 text-right">{{ label }}:</label>
+            <div class="flex-1 px-4 py-1.5 border rounded-full shadow-sm bg-gray-200 text-gray-700 truncate">
               {{ value }}
             </div>
           </div>
         </div>
-        <button 
-          class="w-full mt-4 bg-black text-white py-2 rounded-full hover:bg-gray-800"
-          @click="logout"
-        >
-          Logout
-        </button>
+        <div class="flex space-x-2 mt-6">
+          <button 
+            class="flex-1 bg-black text-white py-2 rounded-full hover:bg-gray-800 text-sm"
+            @click="editProfile"
+          >
+            Edit Profile
+          </button>
+          <button 
+            class="flex-1 bg-black text-white py-2 rounded-full hover:bg-gray-800 text-sm"
+            @click="changePassword"
+          >
+            Change Password
+          </button>
+          <button 
+            class="flex-1 bg-black text-white py-2 rounded-full hover:bg-gray-800 text-sm"
+            @click="logout"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -39,34 +53,55 @@ export default {
       }
     };
   },
-  created() {
-    this.fetchProfile();
+  async created() {
+    if (!localStorage.getItem('isAuthenticated')) {
+      this.$router.push('/auth/login/');
+      return;
+    }
+
+    try {
+      const response = await axios.get("http://127.0.0.1:8000/api/profile/", {
+        withCredentials: true
+      });
+      
+      console.log("Profile data:", response.data);
+      
+      this.user = {
+        Email: response.data.email || 'N/A',
+        Name: response.data.first_name && response.data.last_name 
+          ? `${response.data.first_name} ${response.data.last_name}`
+          : 'N/A',
+        Phone: response.data.phone_number || 'N/A',
+        Address: response.data.address || 'N/A'
+      };
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('isAuthenticated');
+        this.$router.push('/auth/login/');
+      }
+    }
   },
   methods: {
-    async fetchProfile() {
+    async logout() {
       try {
-        const token = localStorage.getItem("access_token");  // Get token from storage
-        if (!token) {
-          console.error("No token found! Redirecting to login...");
-          this.$router.push("/auth/login/"); // Redirect to login if no token
-          return;
-        }
-        console.log("Token used for fetching profile:", token); // Log the token
-        const response = await axios.get("http://127.0.0.1:8000/api/profile/", {
-          headers: {
-            Authorization: `Bearer ${token}`, // Include token in request
-          },
+        await axios.post("http://127.0.0.1:8000/api/auth/logout/", {}, {
+          withCredentials: true
         });
-
-        this.user = response.data;
+        localStorage.removeItem('isAuthenticated');
+        this.$router.push("/auth/login/");
       } catch (error) {
-        console.error("Error fetching profile:", error);
+        console.error("Logout error:", error);
+        localStorage.removeItem('isAuthenticated');
+        this.$router.push("/auth/login/");
       }
     },
-    logout() {
-      localStorage.removeItem("token");
-      this.$router.push("/auth/login/");
+    editProfile() {
+      this.$router.push("/profile/edit");
     },
-  },
+    changePassword() {
+      this.$router.push("/profile/password");
+    }
+  }
 };
 </script>

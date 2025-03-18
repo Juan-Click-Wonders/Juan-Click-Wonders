@@ -54,8 +54,8 @@ AUTHENTICATION_BACKENDS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
     "http://127.0.0.1:8000",
+    "http://127.0.0.1:5173",
 ]
 
 
@@ -74,12 +74,6 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
-CORS_ALLOW_HEADERS = [
-    'authorization',
-    'content-type',
-    'access-control-allow-origin',
-]
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -91,7 +85,7 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_SECURE': True,
     'AUTH_COOKIE_HTTP_ONLY': True,
     'AUTH_COOKIE_PATH': '/',
-    'AUTH_COOKIE_SAMESITE': 'Lax',
+    'AUTH_COOKIE_SAMESITE': 'None',
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

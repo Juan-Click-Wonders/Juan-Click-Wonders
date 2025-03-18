@@ -27,6 +27,12 @@ const routes =[
       component: () => import('../views/ForgotPassword.vue'),
     },
     {
+      path: '/reset-password/:uidb64/:token',
+      name: 'reset-password',
+      component: () => import('../views/ResetPassword.vue'),
+      props: true
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfilePage.vue'),
@@ -37,7 +43,7 @@ const routes =[
       component: () => import('../views/EditProfile.vue'),
     },
     {
-      path: '/profile/update-password',
+      path: '/profile/password',
       name: 'update-password',
       component: () => import('../views/UpdatePassword.vue'),
     },
