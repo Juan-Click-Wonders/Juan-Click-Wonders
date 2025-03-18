@@ -31,7 +31,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    "rest_framework.authtoken",
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
@@ -55,6 +54,7 @@ AUTHENTICATION_BACKENDS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://localhost:5173",
+    "http://127.0.0.1:8000",
     "http://127.0.0.1:5173",
 ]
 
@@ -85,7 +85,7 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_SECURE': True,
     'AUTH_COOKIE_HTTP_ONLY': True,
     'AUTH_COOKIE_PATH': '/',
-    'AUTH_COOKIE_SAMESITE': 'Lax',
+    'AUTH_COOKIE_SAMESITE': 'None',
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

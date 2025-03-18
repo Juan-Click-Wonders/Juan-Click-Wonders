@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
@@ -43,17 +43,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         UserProfile.objects.create(user=user, **profile_data)
         return user
-
-
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-
-    def validate(self, data):
-        user = authenticate(email=data['email'], password=data['password'])
-        if not user:
-            raise serializers.ValidationError("Invalid credentials.")
-        return {'user': user}
 
 
 class UserSerializer(serializers.ModelSerializer):
