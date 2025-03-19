@@ -30,6 +30,7 @@
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Password</label>
               <input v-model="password1" type="password" class="mt-1 block w-full px-4 py-2 border rounded-full shadow-sm focus:ring-black focus:border-black" placeholder="Enter your password" required />
+              <p v-if="passwordError" class="mt-1 text-sm text-red-600">{{ passwordError }}</p>
             </div>
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
@@ -44,6 +45,8 @@
   
   <script>
   import axios from "axios";
+  import { validatePassword } from "../utils/validation";
+
   export default {
     data() {
       return {
@@ -53,11 +56,22 @@
         address: "",
         email: "",
         password1: "",
-        password2: ""
+        password2: "",
+        passwordError: ""
       };
     },
     methods: {
       async register() {
+        // Reset error message
+        this.passwordError = "";
+        
+        // Validate password
+        const passwordError = validatePassword(this.password1);
+        if (passwordError) {
+          this.passwordError = passwordError;
+          return;
+        }
+
         if (this.password1 !== this.password2) {
           alert("Passwords do not match!");
           return;
@@ -80,7 +94,13 @@
             this.$router.push("/auth/login/");
           }
         } catch (error) {
-          console.error("Registration failed:", error);
+          if (error.response && error.response.status === 400) {
+            const errorMessage = error.response.data?.detail || "Registration failed due to invalid input.";
+            alert(errorMessage);
+          } else {
+            console.error("Registration failed:", error);
+            alert("An unexpected error occurred. Please try again.");
+          }
         }
       }
     }

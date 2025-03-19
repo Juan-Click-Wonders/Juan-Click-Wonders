@@ -14,6 +14,7 @@
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">New Password</label>
               <input v-model="newPassword" type="password" class="mt-1 block w-full px-4 py-2 border rounded-full shadow-sm focus:ring-black focus:border-black" placeholder="Enter new password" required />
+              <p v-if="passwordError" class="mt-1 text-sm text-red-600">{{ passwordError }}</p>
             </div>
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
@@ -28,17 +29,29 @@
   
   <script>
   import axios from "axios";
+  import { validatePassword } from "../utils/validation";
 
   export default {
     data() {
       return {
         currentPassword: '',
         newPassword: '',
-        confirmNewPassword: ''
+        confirmNewPassword: '',
+        passwordError: ''
       };
     },
     methods: {
       async updatePassword() {
+        // Reset error message
+        this.passwordError = "";
+        
+        // Validate new password
+        const passwordError = validatePassword(this.newPassword);
+        if (passwordError) {
+          this.passwordError = passwordError;
+          return;
+        }
+
         try {
           const response = await axios.put("http://127.0.0.1:8000/api/user/update-password/", {
             current_password: this.currentPassword,

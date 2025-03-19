@@ -5,7 +5,7 @@
         <h2 class="text-lg font-semibold">Profile</h2>
       </div>
       <div class="p-8">
-        <h3 class="text-xl font-medium text-gray-900">Your Information</h3>
+        <h3 class="text-xl font-medium text-gray-900">Welcome, {{ user.Name }}</h3>
         <div class="mt-4 space-y-2 -ml-4">
           <div v-for="(value, label) in user" :key="label" class="flex items-center">
             <label class="text-sm font-medium text-gray-700 min-w-[70px] mr-3 text-right">{{ label }}:</label>

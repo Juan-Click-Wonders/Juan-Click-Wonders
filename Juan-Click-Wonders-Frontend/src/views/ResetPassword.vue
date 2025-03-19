@@ -10,6 +10,7 @@
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700">New Password</label>
             <input v-model="new_password" type="password" class="mt-1 block w-full px-4 py-2 border rounded-full shadow-sm focus:ring-black focus:border-black" placeholder="Enter new password" required />
+            <p v-if="passwordError" class="mt-1 text-sm text-red-600">{{ passwordError }}</p>
           </div>
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
@@ -24,6 +25,7 @@
 
 <script>
 import axios from "axios";
+import { validatePassword } from "../utils/validation";
 
 export default {
   data() {
@@ -32,10 +34,21 @@ export default {
       confirm_new_password: "",
       uidb64: this.$route.params.uidb64,
       token: this.$route.params.token,
+      passwordError: ""
     };
   },
   methods: {
     async resetPassword() {
+      // Reset error message
+      this.passwordError = "";
+      
+      // Validate new password
+      const passwordError = validatePassword(this.new_password);
+      if (passwordError) {
+        this.passwordError = passwordError;
+        return;
+      }
+
       try {
         const response = await axios.post("http://127.0.0.1:8000/api/auth/reset-password/", {
           uidb64: this.uidb64,
