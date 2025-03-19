@@ -16,3 +16,4 @@ class JWTCookieAuthentication(JWTAuthentication):
             return None
 
         return (user, validated_token)
+

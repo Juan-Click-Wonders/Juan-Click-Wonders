@@ -11,9 +11,11 @@ from ProductManagement.serializers import ProductsSerializer, CategorySerializer
 def productsApi(request, id=0):
     if request.method == "GET":
         if id != 0:
-            product = Products.objects.filter(product_ID=id).first()
+            product = Products.objects.filter(product_id=id).first()
             if product:
-                product_serializer = ProductsSerializer(product)
+                product_serializer = ProductsSerializer(
+                    product, context={"request": request}
+                )
                 return JsonResponse(product_serializer.data, safe=False)
             return JsonResponse({"error": "Product not found"}, status=404)
         products = Products.objects.all()
@@ -21,23 +23,37 @@ def productsApi(request, id=0):
         if not products.exists():
             return JsonResponse({"message": "No items in products"}, status=200)
 
-        products_serializer = ProductsSerializer(products, many=True)
+        products_serializer = ProductsSerializer(
+            products, many=True, context={"request": request}
+        )
         return JsonResponse(products_serializer.data, safe=False)
 
     elif request.method == "POST":
         products_data = request.POST.dict()
-        product_image = request.FILES.get("product_image")
+        image_url = request.FILES.get("image_url")
 
-        if not product_image:
+        if not image_url:
             return JsonResponse({"error": "No image submitted."}, status=400)
 
-        products_data["product_image"] = product_image
+        products_data["image_url"] = image_url
 
-        products_serializer = ProductsSerializer(data=products_data)
+        category_id = products_data.get("category")
+
+        if not category_id:
+            return JsonResponse({"error": "Category ID is required"}, status=400)
+
+        category = Category.objects.filter(category_ID=int(category_id)).first()
+
+        if not category:
+            return JsonResponse({"error": "Invalid category ID"}, status=400)
+
+        products_serializer = ProductsSerializer(
+            data=products_data, context={"request": request}
+        )
 
         if products_serializer.is_valid():
-            product = products_serializer.save()
-            product.product_image = product_image
+            product = products_serializer.save(category=category)
+            product.image_url = image_url
             product.save()
             return JsonResponse({"message": "Added Successfully"}, safe=False)
 
@@ -58,8 +74,8 @@ def productsApi(request, id=0):
         if product_serializer.is_valid():
             product = product_serializer.save()
 
-            if "product_image" in request.FILES:
-                product.product_image = request.FILES["product_image"]
+            if "image_url" in request.FILES:
+                product.image_url = request.FILES["image_url"]
                 product.save()
 
             return JsonResponse({"message": "Updated Successfully"}, status=200)
@@ -67,7 +83,7 @@ def productsApi(request, id=0):
         return JsonResponse({"error": product_serializer.errors}, status=400)
 
     elif request.method == "DELETE":
-        product = Products.objects.filter(product_ID=id).first()
+        product = Products.objects.filter(product_id=id).first()
         if not product:
             return JsonResponse({"error": "Product not found"}, status=404)
 
