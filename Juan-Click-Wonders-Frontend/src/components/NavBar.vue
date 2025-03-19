@@ -8,7 +8,8 @@
                             <img src="/icon.png" alt="Logo" class="!h-16 !w-16 object-contain">
                         </a>
                     </div>
-                    <div class="flex-1 max-w-7xl mx-4 relative flex items-center">
+                    <!-- Search Bar -->
+                    <div v-if="!isAuthPage" class="flex-1 max-w-7xl mx-4 relative flex items-center">
                         <div class="w-full relative">
                             <input type="text" placeholder="Search Products"
                                 v-model="searchQuery"
@@ -35,14 +36,15 @@
                         </div>
                     </div>
                     <div>
-                        <a href="#" class="font-medium hover:text-gray-300 !mx-25">LOGIN</a>
+                        <a v-if="!isLoggedIn" href="/auth/login/" class="font-medium hover:text-gray-300 !mx-25">LOGIN</a>
+                        <a v-else  href="/profile/" class="font-medium hover:text-gray-300 !mx-25">PROFILE</a>
                     </div>
                 </div>
                 <nav class="flex justify-end !py-2 !mx-25">
                     <div class="flex !space-x-8 font-medium">
                         <a href="/" class="hover:text-gray-300">HOME</a>
-                        <a href="/product_list" class="hover:text-gray-300">SHOP</a>
-                        <a href="/about" class="hover:text-gray-300">ABOUT</a>
+                        <a href="/product_list/" class="hover:text-gray-300">SHOP</a>
+                        <a href="/about/" class="hover:text-gray-300">ABOUT</a>
                     </div>
                 </nav>
             </div>
@@ -51,29 +53,41 @@
 </template>
 
 <script>
+import { useRoute } from "vue-router";
+import { computed } from "vue";
+
 export default {
-    data() {
+  setup() {
+      const route = useRoute();
+      const isAuthPage = computed(() => ["login", "register", "forgot-password"].includes(route.name));
+
+      return { isAuthPage };
+  },
+  computed: {
+    isLoggedIn() {
+        return localStorage.getItem('isAuthenticated') === 'true';
+    }
+  },
+  data() {
         return {
             searchQuery: '',
         }
-    },
-    methods: {
-        handleSearch() {
-            // If search is empty or only whitespace, remove search parameter
-            if (!this.searchQuery || !this.searchQuery.trim()) {
-                this.$router.push({
-                    path: '/product_list'
-                });
-            } else {
-                this.$router.push({
-                    path: '/product_list',
-                    query: { search: this.searchQuery.trim() }
-                });
-            }
-        }
-    }
-}
+  },
+  methods: {
+      handleSearch() {
+          // If search is empty or only whitespace, remove search parameter
+          if (!this.searchQuery || !this.searchQuery.trim()) {
+              this.$router.push({
+                  path: '/product_list'
+              });
+          } else {
+              this.$router.push({
+                  path: '/product_list',
+                  query: { search: this.searchQuery.trim() }
+              });
+          }
+      }
+  },
+};
 </script>
 
-<style scoped>
-</style>
