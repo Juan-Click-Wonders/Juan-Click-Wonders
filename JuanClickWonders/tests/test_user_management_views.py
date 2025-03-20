@@ -411,7 +411,7 @@ class TestCustomRefreshTokenView:
             'refresh': 'new_refresh_token'
         }
 
-        mocker.patch(
+        mock_post = mocker.patch(
             'rest_framework_simplejwt.views.TokenRefreshView.post',
             return_value=mock
         )
@@ -424,9 +424,10 @@ class TestCustomRefreshTokenView:
                                 ].value == access_token
         assert response.cookies[settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH']
                                 ].value == 'new_refresh_token'
+        mock_post.assert_called_once()
 
     def test_token_error_handling(self, client_with_refresh_token, mocker):
-        mocker.patch(
+        mock_post = mocker.patch(
             'rest_framework_simplejwt.views.TokenRefreshView.post',
             side_effect=TokenError('Token is invalid or expired')
         )
@@ -435,6 +436,7 @@ class TestCustomRefreshTokenView:
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert response.data == {'error': 'Invalid or expired token.'}
+        mock_post.assert_called_once()
 
     def test_missing_refresh_token(self, api_client):
         url = reverse('refresh-token')
