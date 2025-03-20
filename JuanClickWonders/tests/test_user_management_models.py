@@ -68,4 +68,6 @@ class TestUserProfileModel:
             phone_number='09995557777',
             address='Quezon City'
         )
+
         assert str(profile) == 'Test User'
+
