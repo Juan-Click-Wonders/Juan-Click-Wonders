@@ -416,4 +416,6 @@ class TestTokenRefreshView:
         response = api_client.post(url)
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
         assert response.data['error'] == 'Invalid or expired token.'
+

@@ -1,4 +1,5 @@
 from django.db import models
+from UserManagement.models import UserProfile
 
 
 class Products(models.Model):
@@ -35,3 +36,17 @@ class Category(models.Model):
 
 #     def __str__(self):
 #         return f"{self.user.username} - {self.product.name}: {self.rating}"
+
+class Cart(models.Model):
+    cart_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        UserProfile, on_delete=models.CASCADE, related_name="cart"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+    
+class CartItem(models.Model):
+    cart = models.ForeignKey(
+        "Cart", on_delete=models.CASCADE, related_name="cart_items"
+    )
+    product = models.ForeignKey("Products", on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
