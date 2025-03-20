@@ -27,15 +27,12 @@ class Category(models.Model):
         return self.category_name
 
 
-# class Rating(models.Model):
-#     product = models.ForeignKey("Products", on_delete=models.CASCADE)
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     rating = models.IntegerField()
-#     description = models.TextField()
-#     created_at = models.DateField(auto_now_add=True)
-
-#     def __str__(self):
-#         return f"{self.user.username} - {self.product.name}: {self.rating}"
+class Rating(models.Model):
+    product = models.ForeignKey("Products", on_delete=models.CASCADE)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    rating = models.IntegerField()
+    description = models.TextField()
+    created_at = models.DateField(auto_now_add=True)
 
 class Cart(models.Model):
     cart_id = models.AutoField(primary_key=True)

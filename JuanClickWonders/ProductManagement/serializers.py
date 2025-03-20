@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ProductManagement.models import Products, Category, Cart, CartItem
+from ProductManagement.models import Products, Category, Cart, CartItem, Rating
 
 
 class ProductsSerializer(serializers.ModelSerializer):
@@ -85,3 +85,8 @@ class CartSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         return sum(item.quantity * item.product.price for item in obj.cart_items.all())
+    
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = "__all__"
