@@ -5,12 +5,8 @@ venv
 __pycache__/
 *.py[cod]
 
-*/migrations/*.pyc
-*/migrations/*.pyo
-*/migrations/__pycache__/
-*/migrations/*.py[co]
-*/migrations/*
-!*/migrations/__init__.py
+**/migrations/
+!**/migrations/__init__.py
 
 node_modules/
 
