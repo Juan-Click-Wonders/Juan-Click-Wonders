@@ -1,5 +1,6 @@
 jcw-venv/*
 .env
+venv
 
 __pycache__/
 *.py[cod]
@@ -11,4 +12,7 @@ __pycache__/
 
 node_modules/
 
+db.sqlite3
+
 .DS_Store
+JuanClickWonders/media/product_images/*
