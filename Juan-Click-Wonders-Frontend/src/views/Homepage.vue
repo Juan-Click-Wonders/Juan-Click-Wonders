@@ -1,7 +1,9 @@
 <template>
     <div class="bg-white">
+        <!-- Hero Section -->
         <div class="container mx-auto px-4 py-12">
             <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+                <!-- Texts -->
                 <div class="flex flex-col items-center md:items-start space-y-4 md:w-1/2">
                     <h2 class="text-5xl font-bold">
                         Get top-tier performance without breaking the bank.
@@ -13,6 +15,7 @@
                     </button>
                 </div>
 
+                <!-- Image with Title -->
                 <div class="w-1/2">
                     <h1 class="text-4xl font-bold mb-6 text-center">
                         AMD Radeon RX 6800 XT
@@ -22,10 +25,12 @@
                 </div>
             </div>
         </div>
+        <!-- Top Products Section -->
         <div class="bg-gray-100 text-gray-900 py-16" v-if="!loading && topProducts.length > 0">
             <div class="container mx-auto px-4">
                 <h2 class="text-4xl font-bold mb-8 text-center">Best Sellers</h2>
                 <div class="relative">
+                    <!-- Carousel Container -->
                     <div class="overflow-hidden">
                         <div class="flex transition-transform duration-500 ease-in-out"
                             :style="{ transform: `translateX(-${currentSlide * 25}%)` }">
@@ -48,6 +53,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Navigation Buttons -->
                     <button @click="prevSlide"
                         class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 p-2 rounded-r hover:bg-opacity-75">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,6 +68,7 @@
                             </path>
                         </svg>
                     </button>
+                    <!-- Slide Indicators -->
                     <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 flex space-x-2 mb-4">
                         <button v-for="(_, index) in topProducts" :key="index" @click="goToSlide(index)"
                             class="w-2 h-2 rounded-full transition-colors duration-200"
@@ -71,6 +78,7 @@
             </div>
         </div>
 
+        <!-- Featured Products Section -->
         <div class="bg-gray-50 py-16">
             <div class="container mx-auto px-4">
                 <div class="text-center mb-12">
@@ -83,6 +91,7 @@
                 </div>
 
                 <div v-else>
+                    <!-- Products Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
                         <router-link v-for="product in featuredProducts" :key="product.id"
                             :to="`/product/${product.id}`"
@@ -99,6 +108,7 @@
                         </router-link>
                     </div>
 
+                    <!-- View All Products Button -->
                     <div class="text-center">
                         <router-link to="/product_list"
                             class="inline-block bg-black text-white px-8 py-3 rounded-md font-semibold hover:bg-gray-800 transition-colors">
@@ -174,6 +184,7 @@ export default {
 
             this.featuredProducts = productsResponse.data.slice(0, 8);
 
+            // Get top products from all categories
             const categoriesMap = new Map();
             for (const product of topProductsResponse.data) {
                 if (!categoriesMap.has(product.category_name)) {
@@ -182,6 +193,7 @@ export default {
                 categoriesMap.get(product.category_name).push(product);
             }
 
+            // Get top product from each category
             this.topProducts = Array.from(categoriesMap.entries())
                 .map(([_, products]) => products[0])
                 .filter(product => product);
