@@ -1,4 +1,4 @@
-jcw-venv/*
+jcw-env/*
 .env
 venv
 

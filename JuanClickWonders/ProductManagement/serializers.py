@@ -3,10 +3,8 @@ from ProductManagement.models import Products, Category, Cart, CartItem
 
 
 class ProductsSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(
-        source="category.category_name", read_only=True
-    )
-    image_url = serializers.SerializerMethodField()
+    category_name = serializers.CharField(source="category.category_name", read_only=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True)
 
     class Meta:
         model = Products
@@ -20,6 +18,7 @@ class ProductsSerializer(serializers.ModelSerializer):
             "sold_products",
             "image_url",
             "category_name",
+            "category",
         ]
 
     def get_image_url(self, obj):
