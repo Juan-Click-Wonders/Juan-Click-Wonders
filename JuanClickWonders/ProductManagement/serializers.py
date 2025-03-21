@@ -5,6 +5,7 @@ from ProductManagement.models import Products, Category, Cart, CartItem
 class ProductsSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.category_name", read_only=True)
     category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Products
