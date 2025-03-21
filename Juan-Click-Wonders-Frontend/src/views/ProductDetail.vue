@@ -25,21 +25,6 @@
                 <!-- Title -->
                 <h2 class="text-3xl font-bold mt-1">{{ product.name }}</h2>
 
-                <!-- Ratings -->
-                <!-- <div v-if="ratings.length > 0" class="mt-4">
-                    <h3 class="font-semibold mb-2">Customer Reviews</h3>
-                    <div v-for="rating in ratings" :key="rating.rating_id" class="mb-4 p-4 bg-gray-50 rounded">
-                        <div class="flex items-center text-yellow-500">
-                            <span v-for="star in 5" :key="star">
-                                <i v-if="star <= rating.rating" class="fas fa-star"></i>
-                                <i v-else class="far fa-star"></i>
-                            </span>
-                            <span class="ml-2 text-gray-500">{{ formatDate(rating.created_at) }}</span>
-                        </div>
-                        <p class="mt-2 text-gray-700">{{ rating.description }}</p>
-                    </div>
-                </div> -->
-
                 <!-- Brand -->
                 <p class="text-gray-700 mt-4">Brand: {{ product.brand }}</p>
 
@@ -71,9 +56,10 @@
 
                     <!-- Buy Button -->
                     <button
+                        @click="addToCart"
                         class="px-6 bg-black text-white rounded-full font-semibold hover:bg-gray-800 transition-colors"
                         style="height: 48px;">
-                        Buy Now
+                        Add to Cart
                     </button>
                 </div>
             </div>
@@ -87,8 +73,10 @@ import axios from "axios";
 const api = axios.create({
     baseURL: 'http://127.0.0.1:8000',
     headers: {
-        'Accept': 'application/json'
-    }
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    },
+    withCredentials: true
 });
 
 export default {
@@ -98,12 +86,17 @@ export default {
             categories: [],
             ratings: [],
             quantity: 1,
+            cart: null,
+            loading: false
         };
     },
     computed: {
         categoryName() {
             if (!this.product) return 'Loading...';
             return this.product.category_name || 'Unknown Category';
+        },
+        isLoggedIn() {
+            return localStorage.getItem('isAuthenticated') === 'true';
         }
     },
     methods: {
@@ -128,7 +121,6 @@ export default {
             api.get(`/products/${productId}`)
                 .then(response => {
                     this.product = response.data;
-                    this.fetchRatings(productId);
                 })
                 .catch(error => {
                     console.error("Error fetching product:", error);
@@ -148,6 +140,43 @@ export default {
         },
         decreaseQuantity() {
             if (this.quantity > 1) this.quantity--;
+        },
+        async addToCart() {
+            if (!this.isLoggedIn) {
+                alert('Please log in to add items to your cart.');
+                this.$router.push('/auth/login/');
+                return;
+            }
+
+            try {
+                const cartResponse = await api.get('/cart/');
+                const cart = cartResponse.data[0]; 
+
+                await api.post(`/cart/${cart.cart_id}/items/`, {
+                    product: this.product.product_id,
+                    quantity: this.quantity
+                });
+
+                // Update cart count in localStorage
+                const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
+                localStorage.setItem('cartCount', currentCount + this.quantity);
+
+                // Emit cart-updated event
+                window.dispatchEvent(new Event('cart-updated'));
+
+                // Show success message
+                alert('Product added to cart successfully!');
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                if (error.response && error.response.status === 401) {
+                    alert('Please log in to add items to your cart.');
+                    this.$router.push('/auth/login/');
+                } else if (error.response && error.response.data) {
+                    alert(error.response.data.detail || 'Failed to add item to cart. Please try again.');
+                } else {
+                    alert('Failed to add item to cart. Please try again.');
+                }
+            }
         }
     },
     created() {

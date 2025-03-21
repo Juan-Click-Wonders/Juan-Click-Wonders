@@ -65,6 +65,11 @@
             // The backend sets HTTP-only cookies automatically
             localStorage.setItem('isAuthenticated', 'true');
             
+            // Initialize cart count to 0 on fresh login
+            localStorage.setItem('cartCount', '0');
+            window.dispatchEvent(new Event('cart-updated'));
+            window.dispatchEvent(new Event('auth-state-changed'));
+            
             console.log("Login successful - Navigating to profile...");
             
             try {
