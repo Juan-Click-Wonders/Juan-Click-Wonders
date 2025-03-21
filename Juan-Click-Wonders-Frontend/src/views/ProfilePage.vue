@@ -89,10 +89,16 @@ export default {
           withCredentials: true
         });
         localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('cartCount');
+        window.dispatchEvent(new Event('cart-updated'));
+        window.dispatchEvent(new Event('auth-state-changed'));
         this.$router.push("/auth/login/");
       } catch (error) {
         console.error("Logout error:", error);
         localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('cartCount');
+        window.dispatchEvent(new Event('cart-updated'));
+        window.dispatchEvent(new Event('auth-state-changed'));
         this.$router.push("/auth/login/");
       }
     },

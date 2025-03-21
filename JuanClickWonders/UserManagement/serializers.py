@@ -4,7 +4,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
 from .models import UserProfile
-
+from ProductManagement.models import Cart
 User = get_user_model()
 
 
@@ -41,7 +41,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(
             email=validated_data['email'], password=validated_data['password1']
         )
-        UserProfile.objects.create(user=user, **profile_data)
+        user_profile = UserProfile.objects.create(user=user, **profile_data)
+        Cart.objects.create(user=user_profile)
         return user
 
 
