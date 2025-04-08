@@ -33,6 +33,7 @@ class Rating(models.Model):
     rating = models.IntegerField()
     description = models.TextField()
     created_at = models.DateField(auto_now_add=True)
+    image_url = models.ImageField(upload_to="rating_images/", null=False)
 
 class Cart(models.Model):
     cart_id = models.AutoField(primary_key=True)

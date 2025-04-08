@@ -87,6 +87,7 @@ class CartSerializer(serializers.ModelSerializer):
         return sum(item.quantity * item.product.price for item in obj.cart_items.all())
     
 class RatingSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
     class Meta:
         model = Rating
         fields = "__all__"
@@ -95,4 +96,11 @@ class RatingSerializer(serializers.ModelSerializer):
         if not 1 <= value <= 5:
             raise serializers.ValidationError("Rating must be between 1 and 5")
         return value
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image_url:
+            return request.build_absolute_uri(f"/media/rating_images/{obj.image_url}")
+        return None
+
 
