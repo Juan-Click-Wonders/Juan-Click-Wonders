@@ -22,6 +22,9 @@
               <label class="block text-sm font-medium text-gray-700">Enter Current Password</label>
               <input type="password" v-model="currentPassword" class="mt-1 block w-full px-4 py-2 border rounded-full shadow-sm focus:ring-black focus:border-black" required />
             </div>
+            <div v-if="message" class="mb-4 p-4 rounded-lg bg-red-100 text-red-700 text-sm">
+              {{ message }}
+            </div>
             <button type="submit" class="w-full mt-4 bg-black text-white py-2 rounded-full hover:bg-gray-800">
               Confirm Changes
             </button>
@@ -40,7 +43,8 @@
         phoneNumber: '',
         address: '',
         email: '',
-        currentPassword: ''
+        currentPassword: '',
+        message: null
       };
     },
     async created() {
@@ -72,21 +76,16 @@
             withCredentials: true
           });
 
-          if (response.status === 200) {
-            alert("Profile updated successfully!");
-            this.$router.push("/profile/");
-          }
+          this.$router.push("/profile/");
         } catch (error) {
           console.error("Profile update error:", error);
-          let errorMessage = "Failed to update profile. ";
           if (error.response?.data?.current_password) {
-            errorMessage += error.response.data.current_password[0];
+            this.message = "Please check your password";
           } else if (error.response?.data?.email) {
-            errorMessage += error.response.data.email[0];
+            this.message = "Please check your email";
           } else {
-            errorMessage += "Please try again.";
+            this.message = "Failed to update profile. Check your details.";
           }
-          alert(errorMessage);
         }
       }
     }

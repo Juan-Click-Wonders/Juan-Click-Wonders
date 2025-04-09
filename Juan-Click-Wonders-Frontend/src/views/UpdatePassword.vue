@@ -62,7 +62,6 @@
           });
 
           if (response.status === 200) {
-            alert("Password updated successfully!");
             this.$router.push("/profile/");
           }
         } catch (error) {

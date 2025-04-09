@@ -15,6 +15,9 @@
               <label class="block text-sm font-medium text-gray-700">Password</label>
               <input v-model="password" type="password" class="mt-1 block w-full px-4 py-2 border rounded-full shadow-sm focus:ring-black focus:border-black" placeholder="Enter your password" required />
             </div>
+            <div v-if="message" class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-base">
+              {{ message }}
+            </div>
             <div class="text-center text-sm text-gray-500">
               <a href="/auth/forgot-password" class="hover:underline">Forgot password?</a>
             </div>
@@ -37,10 +40,12 @@
       return {
         email: "",
         password: "",
+        message: ""
       };
     },
     methods: {
       async login() {
+        this.message = ""; // Clear any existing message
         try {
           console.log("Attempting login...");
           
@@ -81,7 +86,7 @@
             }
           } else {
             console.error("Login failed: Unexpected response status");
-            alert("Login failed. Please try again.");
+            this.message = "Login failed. Please try again.";
           }
         } catch (error) {
           console.error("Login error:", {
@@ -93,18 +98,7 @@
             } : 'No response'
           });
           
-          let errorMessage = "Login failed. ";
-          if (error.response?.data?.detail) {
-            errorMessage += error.response.data.detail;
-          } else if (error.response?.data?.message) {
-            errorMessage += error.response.data.message;
-          } else if (error.response?.status === 400) {
-            errorMessage += "Please check your credentials.";
-          } else {
-            errorMessage += "Please try again.";
-          }
-          
-          alert(errorMessage);
+          this.message = "Invalid email or password, check your credentials.";
         }
       }
     }

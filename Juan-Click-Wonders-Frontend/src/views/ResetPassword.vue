@@ -58,7 +58,6 @@ export default {
         });
 
         if (response.status === 200) {
-          alert("Password has been reset successfully!");
           this.$router.push("/auth/login/");
         }
       } catch (error) {
