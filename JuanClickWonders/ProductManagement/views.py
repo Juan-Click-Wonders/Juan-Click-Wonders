@@ -169,8 +169,17 @@ class PaymentAPI(APIView):
         cart_items = CartItem.objects.filter(cart=cart)
         total_amount = sum(item.product.price *
                            item.quantity for item in cart_items)
+
         additional_info = None
         action_url = None
+
+        if total_amount <= 0:
+            return Response({
+                "error": "The cart is empty.",
+                "total_amount": total_amount,
+                "additional_info": additional_info,
+                "action_url": action_url,
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         if method == 'COD':
             payment_successful = True
