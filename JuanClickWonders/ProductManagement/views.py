@@ -219,7 +219,7 @@ class PaymentAPI(APIView):
 
     def process_ewallet_payment(self, amount, method):
         try:
-            channel_code = "PAYMAYA" if method == 'GCS' else "GCASH"
+            channel_code = "GCASH" if method == 'GCS' else "PAYMAYA"
             xendit_response = requests.post(
                 url="https://api.xendit.co/payment_requests",
                 json={
