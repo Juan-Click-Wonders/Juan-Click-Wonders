@@ -190,7 +190,7 @@ class PaymentAPI(APIView):
 
             if "error" in xendit_response_data or "error_code" in xendit_response_data:
                 payment_successful = False
-                additional_info = xendit_response
+                additional_info = xendit_response_data
             else:
                 actions = xendit_response_data.get('actions', [])
 
