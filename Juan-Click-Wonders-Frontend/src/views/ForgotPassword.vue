@@ -11,6 +11,9 @@
             <label class="block text-sm font-medium text-gray-700">Email</label>
             <input v-model="email" type="email" class="mt-1 block w-full px-4 py-2 border rounded-full shadow-sm focus:ring-black focus:border-black" placeholder="Enter your email" required />
           </div>
+          <div v-if="message" class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-base">
+            {{ message }}
+          </div>
           <button type="submit" class="w-full mt-4 bg-black text-white py-2 rounded-full hover:bg-gray-800">Reset Password</button>
         </form>
         <div class="text-center text-sm text-gray-500 mt-3">
@@ -31,28 +34,27 @@ export default {
   data() {
     return {
       email: "",
+      message: ""
     };
   },
   methods: {
     async resetPassword() {
+      this.message = ""; // Clear any existing message
       try {
         const response = await axios.post("http://127.0.0.1:8000/api/auth/forgot-password/", {
           email: this.email
         });
         
         if (response.status === 200) {
-          alert("Password reset instructions have been sent to your email.");
           this.$router.push("/auth/login/");
         }
       } catch (error) {
         console.error("Password reset error:", error);
-        let errorMessage = "Failed to send reset instructions. ";
         if (error.response?.data?.email) {
-          errorMessage += error.response.data.email[0];
+          this.message = error.response.data.email[0];
         } else {
-          errorMessage += "Please try again.";
+          this.message = "Failed to send reset instructions. Please try again.";
         }
-        alert(errorMessage);
       }
     },
   },

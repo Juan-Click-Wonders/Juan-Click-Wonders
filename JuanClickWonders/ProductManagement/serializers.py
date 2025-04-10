@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ProductManagement.models import Products, Category, Cart, CartItem
+from ProductManagement.models import Products, Category, Cart, CartItem, Rating
 
 
 class ProductsSerializer(serializers.ModelSerializer):
@@ -85,3 +85,22 @@ class CartSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         return sum(item.quantity * item.product.price for item in obj.cart_items.all())
+    
+class RatingSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    class Meta:
+        model = Rating
+        fields = "__all__"
+
+    def validate_rating(self, value):
+        if not 1 <= value <= 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5")
+        return value
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.image_url:
+            return request.build_absolute_uri(f"/media/rating_images/{obj.image_url}")
+        return None
+
+

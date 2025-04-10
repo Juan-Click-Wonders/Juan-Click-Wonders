@@ -63,9 +63,6 @@ export default {
       const response = await axios.get("http://127.0.0.1:8000/api/profile/", {
         withCredentials: true
       });
-      
-      console.log("Profile data:", response.data);
-      
       this.user = {
         Email: response.data.email || 'N/A',
         Name: response.data.first_name && response.data.last_name 

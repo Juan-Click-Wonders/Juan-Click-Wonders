@@ -78,8 +78,9 @@ export default {
       const cartCount = ref(0);
 
       const updateCartCount = () => {
-          if (localStorage.getItem('isAuthenticated') === 'true') {
-              cartCount.value = parseInt(localStorage.getItem('cartCount') || '0');
+          if (localStorage.getItem('isAuthenticated')) {
+              const count = localStorage.getItem('cartCount');
+              cartCount.value = count ? parseInt(count) : 0;
           } else {
               cartCount.value = 0;
               localStorage.removeItem('cartCount');
@@ -126,6 +127,15 @@ export default {
                   path: '/product_list',
                   query: { search: this.searchQuery.trim() }
               });
+          }
+      },
+      updateCartCount() {
+          if (localStorage.getItem('isAuthenticated')) {
+              const count = localStorage.getItem('cartCount');
+              this.cartCount = count ? parseInt(count) : 0;
+          } else {
+              this.cartCount = 0;
+              localStorage.removeItem('cartCount');
           }
       }
   },
