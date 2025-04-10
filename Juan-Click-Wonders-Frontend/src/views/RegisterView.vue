@@ -36,6 +36,9 @@
               <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
               <input v-model="password2" type="password" class="mt-1 block w-full px-4 py-2 border rounded-full shadow-sm focus:ring-black focus:border-black" placeholder="Re-enter your password" required />
             </div>
+            <div v-if="message" class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-base">
+              {{ message }}
+            </div>
             <button type="submit" class="w-full mt-4 bg-black text-white py-2 rounded-full hover:bg-gray-800">Sign Up</button>
           </form>
         </div>
@@ -57,13 +60,15 @@
         email: "",
         password1: "",
         password2: "",
-        passwordError: ""
+        passwordError: "",
+        message: ""
       };
     },
     methods: {
       async register() {
-        // Reset error message
+        // Reset error messages
         this.passwordError = "";
+        this.message = "";
         
         // Validate password
         const passwordError = validatePassword(this.password1);
@@ -73,7 +78,7 @@
         }
 
         if (this.password1 !== this.password2) {
-          alert("Passwords do not match!");
+          this.message = "Passwords do not match!";
           return;
         }
   
@@ -90,16 +95,14 @@
         try {
           const response = await axios.post("http://127.0.0.1:8000/api/auth/register/", userData);
           if (response.status === 201) {
-            alert("Registered successfully!");
             this.$router.push("/auth/login/");
           }
         } catch (error) {
           if (error.response && error.response.status === 400) {
-            const errorMessage = error.response.data?.detail || "Registration failed due to invalid input.";
-            alert(errorMessage);
+            this.message = "Please check your details.";
           } else {
             console.error("Registration failed:", error);
-            alert("An unexpected error occurred. Please try again.");
+            this.message = "An unexpected error occurred. Please try again.";
           }
         }
       }

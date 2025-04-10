@@ -191,7 +191,7 @@ export default {
                                     Inventory_Level: productResponse.data.stock
                                 }
                             });
-                            totalItems += item.quantity;
+                            totalItems += 1;
                         } catch (error) {
                             console.error(`Error fetching product ${item.product}:`, error);
                             this.unavailableItems.push(item.id);
@@ -258,20 +258,14 @@ export default {
         },
         async removeFromCart(itemId) {
             try {
-                // Find the item quantity before removing it
-                const itemToRemove = this.cartItems.find(item => item.id === itemId);
-                if (!itemToRemove) return;
-
                 await api.delete(`/cart/${this.cart.cart_id}/items/${itemId}/`);
                 
-                // Update cart count in localStorage
                 const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', Math.max(0, currentCount - itemToRemove.quantity));
+                localStorage.setItem('cartCount', Math.max(0, currentCount - 1));
                 
-                // Emit cart-updated event to update the navbar
                 window.dispatchEvent(new Event('cart-updated'));
                 
-                await this.fetchCart(); // Refresh cart data
+                await this.fetchCart();
             } catch (error) {
                 console.error('Error removing item:', error);
             }
