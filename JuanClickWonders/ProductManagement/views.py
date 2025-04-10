@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
+from urllib.parse import quote
 from ProductManagement.models import Products, Category, Cart, CartItem, Payment
 from ProductManagement.serializers import ProductsSerializer, CategorySerializer, CartSerializer, CartItemSerializer
 
@@ -227,9 +228,10 @@ class PaymentAPI(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
     def process_ewallet_payment(self, amount, method):
+        channel_code = "GCASH" if method == 'GCS' else "PAYMAYA"
+        paymentError = quote("The payment was unsuccessful. Please try again")
         try:
-            channel_code = "GCASH" if method == 'GCS' else "PAYMAYA"
-            xendit_response = requests.post(
+            return requests.post(
                 url="https://api.xendit.co/payment_requests",
                 json={
                     "amount": amount,
@@ -240,10 +242,9 @@ class PaymentAPI(APIView):
                         "ewallet": {
                             "channel_code": channel_code,
                             "channel_properties": {
-                                # Replace these placeholders with their corresponding frontend urls
-                                "success_return_url": "https://redirect.me/goodstuff",
-                                "failure_return_url": "https://redirect.me/badstuff",
-                                "cancel_return_url": "https://redirect.me/cancelstuff"
+                                "success_return_url": "http://localhost:5173/orders",
+                                "failure_return_url": f"http://localhost:5173/cart?paymentError={paymentError}",
+                                "cancel_return_url": f"http://localhost:5173/cart?paymentError={paymentError}"
                             }
                         },
                         "reusability": "ONE_TIME_USE"
@@ -254,8 +255,6 @@ class PaymentAPI(APIView):
                 },
                 timeout=30
             )
-
-            return xendit_response
 
         except requests.RequestException as e:
             raise RuntimeError(f"E-Wallet payment request failed: {e}")
