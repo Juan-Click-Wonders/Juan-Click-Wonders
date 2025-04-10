@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import MagicMock
 from django.urls import reverse
 from django.conf import settings
 from rest_framework import status
@@ -48,6 +49,23 @@ def test_user(db):
 @pytest.fixture
 def authenticated_client(api_client, test_user):
     api_client.force_authenticate(user=test_user)
+    return api_client
+
+
+@pytest.fixture
+def refresh_token():
+    return "test_refresh_token"
+
+
+@pytest.fixture
+def access_token():
+    return "test_access_token"
+
+
+@pytest.fixture
+def client_with_refresh_token(api_client, refresh_token):
+    api_client.cookies[settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH']
+                       ] = refresh_token
     return api_client
 
 
@@ -194,7 +212,7 @@ class TestUpdateProfileView:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'current_password' in response.data
 
-    def test_update_profile_email_already_exists(self, authenticated_client, db):
+    def test_update_profile_email_already_exists(self, authenticated_client):
         user = User.objects.create_user(
             email='existingtest@test.com', password='wowpassword123!'
         )
@@ -369,53 +387,60 @@ class TestResetPasswordView:
 
 
 @pytest.mark.django_db
-class TestTokenRefreshView:
-    def test_token_refresh_success(self, api_client, test_user, mocker):
-        mock_refresh = mocker.MagicMock()
-        mock_refresh.access_token = 'new_access_token'
-        mock_refresh.__getitem__.side_effect = lambda key: test_user.id if key == 'user_id' else None
-        mock_refresh_class = mocker.patch(
-            'UserManagement.views.RefreshToken', return_value=mock_refresh
-        )
-        mocker.patch(
-            'UserManagement.views.User.objects.get',
-            return_value=test_user
-        )
-
-        new_refresh = mocker.MagicMock()
-        new_refresh.__str__.return_value = 'new_refresh_token'
-        mocker.patch('UserManagement.views.RefreshToken.for_user',
-                     return_value=new_refresh)
-        api_client.cookies[settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH']
-                           ] = 'old_refresh_token'
-
-        url = reverse('refresh-token')
-        response = api_client.post(url)
+class TestIsAuthenticatedView:
+    def test_authenticated_access(self, authenticated_client):
+        url = reverse('authenticate')
+        response = authenticated_client.post(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['message'] == 'Token refreshed successfully.'
-        assert settings.SIMPLE_JWT['AUTH_COOKIE'] in response.cookies
-        assert settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'] in response.cookies
-        mock_refresh_class.assert_called_once_with('old_refresh_token')
+        assert 'authenticated' in response.data
 
-    def test_token_refresh_no_token(self, api_client):
-        url = reverse('refresh-token')
-        response = api_client.post(url)
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.data['error'] == 'No refresh token found.'
-
-    def test_token_refresh_invalid_token(self, api_client, mocker):
-        mocker.patch('UserManagement.views.RefreshToken',
-                     side_effect=TokenError('Invalid or expired token.')
-                     )
-        api_client.cookies[settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH']
-                           ] = 'invalid_token'
-
-        url = reverse('refresh-token')
+    def test_inauthenticated_access(self, api_client):
+        url = reverse('authenticate')
         response = api_client.post(url)
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-        assert response.data['error'] == 'Invalid or expired token.'
 
+@pytest.mark.django_db
+class TestCustomRefreshTokenView:
+    def test_successful_refresh(self, client_with_refresh_token, access_token, mocker):
+        mock = MagicMock()
+        mock.data = {
+            'access': access_token,
+            'refresh': 'new_refresh_token'
+        }
+
+        mock_post = mocker.patch(
+            'rest_framework_simplejwt.views.TokenRefreshView.post',
+            return_value=mock
+        )
+        url = reverse('refresh-token')
+        response = client_with_refresh_token.post(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert 'message' in response.data
+        assert response.cookies[settings.SIMPLE_JWT['AUTH_COOKIE']
+                                ].value == access_token
+        assert response.cookies[settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH']
+                                ].value == 'new_refresh_token'
+        mock_post.assert_called_once()
+
+    def test_token_error_handling(self, client_with_refresh_token, mocker):
+        mock_post = mocker.patch(
+            'rest_framework_simplejwt.views.TokenRefreshView.post',
+            side_effect=TokenError('Token is invalid or expired')
+        )
+        url = reverse('refresh-token')
+        response = client_with_refresh_token.post(url)
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.data == {'error': 'Invalid or expired token.'}
+        mock_post.assert_called_once()
+
+    def test_missing_refresh_token(self, api_client):
+        url = reverse('refresh-token')
+        response = api_client.post(url)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'refresh' in response.data

@@ -26,13 +26,28 @@
                             </button>
                         </div>
                         <div class="!ml-4">
-                            <a href="#" class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                            </a>
+                            <!-- Cart Icon -->
+                            <div v-if="isLoggedIn">
+                                <router-link to="/cart" class="flex items-center relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    <span v-if="cartCount > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                        {{ cartCount }}
+                                    </span>
+                                </router-link>
+                            </div>
+                            <div v-else>
+                                <router-link to="/auth/login" class="flex items-center relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </router-link>
+                            </div>
                         </div>
                     </div>
                     <div>
@@ -54,14 +69,41 @@
 
 <script>
 import { useRoute } from "vue-router";
-import { computed } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 
 export default {
   setup() {
       const route = useRoute();
       const isAuthPage = computed(() => ["login", "register", "forgot-password"].includes(route.name));
+      const cartCount = ref(0);
 
-      return { isAuthPage };
+      const updateCartCount = () => {
+          if (localStorage.getItem('isAuthenticated')) {
+              const count = localStorage.getItem('cartCount');
+              cartCount.value = count ? parseInt(count) : 0;
+          } else {
+              cartCount.value = 0;
+              localStorage.removeItem('cartCount');
+          }
+      };
+
+      onMounted(() => {
+          updateCartCount();
+          // Listen for storage events from other tabs/windows
+          window.addEventListener('storage', updateCartCount);
+          // Listen for custom events from the same window
+          window.addEventListener('cart-updated', updateCartCount);
+          // Listen for auth state changes
+          window.addEventListener('auth-state-changed', updateCartCount);
+      });
+
+      onUnmounted(() => {
+          window.removeEventListener('storage', updateCartCount);
+          window.removeEventListener('cart-updated', updateCartCount);
+          window.removeEventListener('auth-state-changed', updateCartCount);
+      });
+
+      return { isAuthPage, cartCount };
   },
   computed: {
     isLoggedIn() {
@@ -85,6 +127,15 @@ export default {
                   path: '/product_list',
                   query: { search: this.searchQuery.trim() }
               });
+          }
+      },
+      updateCartCount() {
+          if (localStorage.getItem('isAuthenticated')) {
+              const count = localStorage.getItem('cartCount');
+              this.cartCount = count ? parseInt(count) : 0;
+          } else {
+              this.cartCount = 0;
+              localStorage.removeItem('cartCount');
           }
       }
   },

@@ -28,7 +28,7 @@
                                 <span>{{ brand }}</span>
                             </label>
                         </div>
-                        <button v-if="uniqueBrands.length > 5"@click="toggleBrands" class="text-blue-600 hover:text-blue-800 text-sm mt-2 flex items-center">
+                        <button v-if="uniqueBrands.length > 5" @click="toggleBrands" class="text-blue-600 hover:text-blue-800 text-sm mt-2 flex items-center">
                             {{ hasMoreBrands ? 'View More' : 'Show Less' }}
                             <i :class="hasMoreBrands ? 'fas fa-chevron-down ml-1' : 'fas fa-chevron-up ml-1'"></i>
                         </button>

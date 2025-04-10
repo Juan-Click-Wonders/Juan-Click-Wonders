@@ -57,7 +57,6 @@ class Cart(models.Model):
         UserProfile, on_delete=models.CASCADE, related_name="cart"
     )
     updated_at = models.DateTimeField(auto_now=True)
-    
 
 class CartItem(models.Model):
     cart = models.ForeignKey(
@@ -65,3 +64,22 @@ class CartItem(models.Model):
     )
     product = models.ForeignKey("Products", on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
+
+
+class Payment(models.Model):
+    PAYMENT_METHODS = [
+        ('COD', 'Cash on Delivery'),
+        ('GCS', 'GCash'),
+        ('MYA', 'Maya'),
+    ]
+
+    user = models.ForeignKey(
+        UserProfile, on_delete=models.CASCADE
+    )
+    cart = models.ForeignKey(
+        "Cart", on_delete=models.CASCADE
+    )
+    method = models.CharField(max_length=3, choices=PAYMENT_METHODS)
+    amount = models.FloatField()
+    success = models.BooleanField(default=None)
+    timestamp = models.DateTimeField(auto_now_add=True)
