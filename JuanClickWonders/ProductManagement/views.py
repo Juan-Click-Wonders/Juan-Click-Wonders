@@ -258,7 +258,4 @@ class PaymentAPI(APIView):
             return xendit_response
 
         except requests.RequestException as e:
-            return Response({
-                "message": "E-Wallet payment request failed.",
-                "error": str(e)
-            }, status=status.HTTP_502_BAD_GATEWAY)
+            raise RuntimeError(f"E-Wallet payment request failed: {e}")
