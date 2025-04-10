@@ -1,6 +1,6 @@
 <template>
     <div class="flex items-center justify-center min-h-screen bg-gray-100">
-      <div class="w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div class="w-full max-w-sm bg-white rounded-2xl shadow-lg overflow-hidden my-8">
         <div class="bg-black text-white text-center py-6">
           <h2 class="text-lg font-semibold">Register</h2>
         </div>
