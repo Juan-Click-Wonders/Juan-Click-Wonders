@@ -1,0 +1,5 @@
+[
+  "tests/test_payment_models.py::TestPaymentModel::test_create_payment_cod",
+  "tests/test_payment_models.py::TestPaymentModel::test_create_payment_other_method[GCS]",
+  "tests/test_payment_models.py::TestPaymentModel::test_create_payment_other_method[MYA]"
+]
