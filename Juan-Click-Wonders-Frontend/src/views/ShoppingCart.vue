@@ -217,13 +217,13 @@ export default {
                                     Inventory_Level: productResponse.data.stock
                                 }
                             });
-                            totalItems += item.quantity;
+                            totalItems += 1;
                         } catch (error) {
                             console.error(`Error fetching product ${item.product}:`, error);
                             this.unavailableItems.push(item.id);
                         }
                     }
-
+                    
                     localStorage.setItem('cartCount', totalItems);
                     window.dispatchEvent(new Event('cart-updated'));
 
@@ -265,16 +265,15 @@ export default {
                     return;
                 }
 
-                const quantityDifference = newQuantity - itemToUpdate.quantity;
-
                 await api.patch(`/cart/${this.cart.cart_id}/items/${itemId}/`, {
                     quantity: newQuantity
                 });
 
                 this.cartItems[itemIndex].quantity = newQuantity;
 
-                const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', Math.max(0, currentCount + quantityDifference));
+                const uniqueItemsCount = this.cartItems.length;
+
+                localStorage.setItem('cartCount', uniqueItemsCount);
                 window.dispatchEvent(new Event('cart-updated'));
             } catch (error) {
                 console.error('Error updating quantity:', error);
@@ -292,7 +291,7 @@ export default {
                 this.cartItems.splice(itemIndex, 1);
 
                 const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', Math.max(0, currentCount - itemToRemove.quantity));
+                localStorage.setItem('cartCount', Math.max(0, currentCount - 1));
 
                 window.dispatchEvent(new Event('cart-updated'));
 
@@ -345,6 +344,9 @@ export default {
             await this.fetchCart();
             await this.fetchUserProfile();
         }
+        this.message = this.$route.query.paymentError || "";
+        this.messageType = this.$route.query.paymentError ? 'error' : this.messageType;
+        
     },
     beforeUnmount() {
         if (!this.isAuthenticated) {
