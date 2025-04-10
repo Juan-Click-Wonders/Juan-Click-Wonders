@@ -1,54 +1,152 @@
 <template>
-    <div class="container mx-auto p-6">
-        <router-link 
-            to="/product_list"
-            class="inline-block mb-4 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-900 cursor-pointer"
-        >
-            ← Back to Catalog
-        </router-link>
+    <div class="bg-gray-50 min-h-screen pb-16">
+        <!-- Loading State -->
+        <div v-if="loading" class="container mx-auto px-4 py-12 h-screen flex items-center justify-center">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-500 mx-auto"></div>
+                <p class="text-gray-600 mt-6 text-lg">Loading product details...</p>
+            </div>
+        </div>
 
-        <div v-if="product" class="flex gap-8 mt-4">
-            <div class="w-1/2">
-                <img v-if="product.image_url" :src="getImageUrl(product.image_url)" :alt="product.name" class="w-full max-h-[500px] object-contain">
-                <div v-else class="w-full h-[500px] bg-gray-200 flex items-center justify-center">
-                    <span>No Image Available</span>
+        <div v-else-if="!product" class="container mx-auto px-4 py-12 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="text-xl font-bold text-gray-700 mb-2">Product Not Found</h3>
+            <p class="text-gray-600 mb-6">The product you're looking for could not be found</p>
+            <router-link to="/product_list" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold px-6 py-2 rounded-lg transition-colors duration-200">
+                Browse Products
+            </router-link>
+        </div>
+
+        <div v-else>
+            <!-- Breadcrumb Navigation -->
+            <div class="bg-white border-b border-gray-200">
+                <div class="container mx-auto px-4 py-3">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <router-link to="/" class="hover:text-yellow-600 transition-colors">Home</router-link>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                        <router-link to="/product_list" class="hover:text-yellow-600 transition-colors">Products</router-link>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                        <span class="text-gray-800 font-medium truncate max-w-xs">{{ product.name }}</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="w-1/2">
-                <h4 class="text-sm text-gray-500 uppercase font-semibold mt-2">{{ categoryName }}</h4>
+            <!-- Product Content -->
+            <div class="container mx-auto px-4 py-8">
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="flex flex-col lg:flex-row">
+                        <!-- Product Image -->
+                        <div class="lg:w-1/2 p-8 bg-white">
+                            <div class="relative h-96 bg-white rounded-lg flex items-center justify-center p-4 mb-3 mx-auto max-w-xl">
+                                <img v-if="product.image_url" :src="getImageUrl(product.image_url)" :alt="product.name" 
+                                    class="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-110">
+                                <div v-else class="w-full h-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                
+                                <!-- Stock Badge -->
+                                <div v-if="product.stock === 0" class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold uppercase px-3 py-1 rounded-lg">
+                                    Out of Stock
+                                </div>
+                                <div v-else-if="product.stock < 5" class="absolute top-3 left-3 bg-orange-500 text-white text-xs font-bold uppercase px-3 py-1 rounded-lg">
+                                    Low Stock: {{ product.stock }} left
+                                </div>
+                            </div>
+                        </div>
 
-                <h2 class="text-3xl font-bold mt-1">{{ product.name }}</h2>
+                        <!-- Product Details -->
+                        <div class="lg:w-1/2 p-8">
+                            <div class="flex flex-col h-full">
+                                <!-- Category & Brand -->
+                                <div class="flex justify-between items-start mb-3">
+                                    <span class="bg-yellow-100 text-yellow-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                        {{ categoryName }}
+                                    </span>
+                                    <span class="text-gray-600 text-sm">Brand: <span class="font-medium">{{ product.brand }}</span></span>
+                                </div>
 
-                <p class="text-gray-700 mt-4">Brand: {{ product.brand }}</p>
+                                <!-- Product Name -->
+                                <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.name }}</h1>
 
-                <p class="text-gray-700 mt-4">{{ product.description }}</p>
+                                <!-- Price -->
+                                <div class="flex items-baseline mb-6">
+                                    <span class="text-3xl font-bold text-gray-900">₱{{ product.price.toLocaleString() }}</span>
+                                    <span class="ml-2 text-sm text-gray-500">{{ product.sold_products }} units sold</span>
+                                </div>
 
-                <p class="text-2xl font-semibold text-gray-800 mt-4">₱{{ product.price.toLocaleString() }}</p>
+                                <!-- Description -->
+                                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                                    <h3 class="font-semibold text-gray-800 mb-2">Description</h3>
+                                    <p class="text-gray-700">{{ product.description || 'No description available for this product.' }}</p>
+                                </div>
 
-                <p class="text-gray-700 mt-2">Stock Available: {{ product.stock }}</p>
+                                <!-- Specifications -->
+                                <div class="border-t border-gray-200 pt-6 mb-6">
+                                    <h3 class="font-semibold text-gray-800 mb-3">Specifications</h3>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="flex flex-col">
+                                            <span class="text-gray-600 text-sm">Category</span>
+                                            <span class="font-medium">{{ categoryName }}</span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-gray-600 text-sm">Brand</span>
+                                            <span class="font-medium">{{ product.brand }}</span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-gray-600 text-sm">Stock</span>
+                                            <span class="font-medium">{{ product.stock }} units</span>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-gray-600 text-sm">Units Sold</span>
+                                            <span class="font-medium">{{ product.sold_products }}</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-                <div class="flex items-center mt-6 gap-4">
-                    <div class="relative flex items-center border rounded-full bg-white px-4"
-                        style="height: 48px; min-width: 120px; position: relative;">
-                        <input type="text" v-model="quantity"
-                            class="w-10 text-center bg-transparent focus:outline-none text-lg font-semibold" readonly>
-                        <div class="absolute right-3 flex flex-col">
-                            <button @click="increaseQuantity" class="text-gray-700 hover:text-black cursor-pointer">
-                                <i class="fas fa-chevron-up"></i>
-                            </button>
-                            <button @click="decreaseQuantity" class="text-gray-700 hover:text-black cursor-pointer">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
+                                <!-- Add to Cart -->
+                                <div class="mt-auto">
+                                    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                        <div class="flex items-center bg-white border border-gray-300 rounded-lg overflow-hidden">
+                                            <button @click="decreaseQuantity" 
+                                                class="px-4 py-2 text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                                :disabled="quantity <= 1 || product.stock === 0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                                                </svg>
+                                            </button>
+                                            <span class="w-12 text-center font-medium">{{ quantity }}</span>
+                                            <button @click="increaseQuantity" 
+                                                class="px-4 py-2 text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                                :disabled="quantity >= product.stock || product.stock === 0">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <button @click="addToCart" 
+                                            class="flex-1 bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            :disabled="product.stock === 0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                            <span>{{ product.stock === 0 ? 'Out of Stock' : 'Add to Cart' }}</span>
+                                        </button>
+                                    </div>
+                                    <p v-if="!isLoggedIn" class="text-center text-sm text-gray-600 mt-3">
+                                        <router-link to="/auth/login/" class="text-yellow-600 hover:underline">Log in</router-link> to add items to your cart
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <button
-                        @click="addToCart"
-                        class="px-6 bg-black text-white rounded-full font-semibold hover:bg-gray-800 transition-colors"
-                        style="height: 48px;">
-                        Add to Cart
-                    </button>
                 </div>
             </div>
         </div>
@@ -75,7 +173,7 @@ export default {
             ratings: [],
             quantity: 1,
             cart: null,
-            loading: false
+            loading: true
         };
     },
     computed: {
@@ -95,33 +193,25 @@ export default {
         formatDate(dateString) {
             return new Date(dateString).toLocaleDateString();
         },
-        fetchCategories() {
-            api.get("/category")
-                .then(response => {
-                    this.categories = response.data;
-                })
-                .catch(error => {
-                    console.error("Error fetching categories:", error);
-                });
+        async fetchCategories() {
+            try {
+                const response = await api.get("/category");
+                this.categories = response.data;
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+            }
         },
-        fetchProduct() {
-            const productId = this.$route.params.id;
-            api.get(`/products/${productId}`)
-                .then(response => {
-                    this.product = response.data;
-                })
-                .catch(error => {
-                    console.error("Error fetching product:", error);
-                });
-        },
-        fetchRatings(productId) {
-            api.get(`/products/ratings/${productId}`)
-                .then(response => {
-                    this.ratings = response.data;
-                })
-                .catch(error => {
-                    console.error("Error fetching ratings:", error);
-                });
+        async fetchProduct() {
+            try {
+                this.loading = true;
+                const productId = this.$route.params.id;
+                const response = await api.get(`/products/${productId}`);
+                this.product = response.data;
+                this.loading = false;
+            } catch (error) {
+                console.error("Error fetching product:", error);
+                this.loading = false;
+            }
         },
         increaseQuantity() {
             if (this.quantity < this.product.stock) this.quantity++;
@@ -141,27 +231,31 @@ export default {
 
                 const existingItem = cart.cart_items.find(item => item.product === this.product.product_id);
                 
+                // Calculate the quantity difference for the cart count
+                let quantityToAdd = this.quantity;
+                
+                // If item exists, we're only adding the difference in quantity
+                if (existingItem) {
+                    quantityToAdd = this.quantity - existingItem.quantity;
+                    if (quantityToAdd < 0) quantityToAdd = 0; // Prevent negative values
+                }
+                
                 await api.post(`/cart/${cart.cart_id}/items/`, {
                     product: this.product.product_id,
                     quantity: this.quantity
                 });
 
-                if (!existingItem) {
-                    const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                    localStorage.setItem('cartCount', currentCount + 1);
-                    window.dispatchEvent(new Event('cart-updated'));
-                }
+                // Update total item count
+                const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
+                localStorage.setItem('cartCount', (currentCount + quantityToAdd).toString());
+                window.dispatchEvent(new Event('cart-updated'));
 
-                this.$router.push('/product_list/');
+                // Redirect to cart page
+                this.$router.push('/cart');
             } catch (error) {
                 console.error('Error adding to cart:', error);
                 if (error.response && error.response.status === 401) {
-                    alert('Please log in to add items to your cart.');
                     this.$router.push('/auth/login/');
-                } else if (error.response && error.response.data) {
-                    alert(error.response.data.detail || 'Failed to add item to cart. Please try again.');
-                } else {
-                    alert('Failed to add item to cart. Please try again.');
                 }
             }
         }
@@ -169,10 +263,32 @@ export default {
     created() {
         this.fetchCategories();
         this.fetchProduct();
+    },
+    watch: {
+        // Reset and refetch when the route changes (for navigating between products)
+        '$route.params.id'() {
+            this.quantity = 1;
+            this.product = null;
+            this.fetchProduct();
+        }
     }
 };
 </script>
 
-<style>
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
+<style scoped>
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
+
+/* Add animation for placeholder loading */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 </style>
