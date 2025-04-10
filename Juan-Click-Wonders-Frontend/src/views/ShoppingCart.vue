@@ -33,13 +33,13 @@
 
                         <div class="flex items-center mt-2">
                             <button @click="updateQuantity(item.id, item.quantity - 1)"
-                                class="px-2 py-1 border rounded-l" 
+                                class="px-2 py-1 border rounded-l cursor-pointer" 
                                 :disabled="unavailableItems.includes(item.id)">
                                 -
                             </button>
                             <span class="px-4 py-1 border-t border-b">{{ item.quantity }}</span>
                             <button @click="updateQuantity(item.id, item.quantity + 1)"
-                                class="px-2 py-1 border rounded-r"
+                                class="px-2 py-1 border rounded-r cursor-pointer"
                                 :disabled="item.quantity >= item.product.Inventory_Level || unavailableItems.includes(item.id)">
                                 +
                             </button>
@@ -53,7 +53,7 @@
                         <p class="font-semibold">₱{{ (item.product.Price * item.quantity).toLocaleString('en-US', {
             minimumFractionDigits: 2, maximumFractionDigits: 2
         }) }}</p>
-                        <button @click="removeFromCart(item.id)" class="text-red-600 hover:text-red-800 mt-2">
+                        <button @click="removeFromCart(item.id)" class="cursor-pointer text-red-600 hover:text-red-800 mt-2">
                             Remove
                         </button>
                     </div>
@@ -82,17 +82,41 @@
                         <span>Subtotal</span>
                         <span>₱{{ subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
                     </div>
-                    <div class="flex justify-between mb-4">
+                    <div class="flex justify-between mb-4 border-b-1 pb-4">
                         <span>Shipping Fee</span>
                         <span>₱{{ shippingFee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
                     </div>
-                    <div class="border-t pt-4">
+
+                    <div class="mt-6 mb-4">
+                        <p class="text-lg font-medium mb-3">Payment Method</p>
+                        <div class="flex gap-4">
+                            <label class="flex-1 border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all duration-200">
+                            <div class="flex items-center gap-2">
+                                <input v-model="selectedPayment" type="radio" name="payment" value="GCS" @change="paymentError = ''" class="cursor-pointer h-4 w-4 text-blue-500 focus:ring-blue-400"/>
+                                <span class="flex-1 font-medium">GCash</span>
+                            </div>
+                            </label>
+                            <label class="flex-1 border border-gray-200 rounded-lg p-3 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all duration-200">
+                            <div class="flex items-center gap-2">
+                                <input v-model="selectedPayment" type="radio" name="payment" value="MYA" @change="paymentError = ''" class="cursor-pointer h-4 w-4 text-blue-500 focus:ring-blue-400"/>
+                                <span class="flex-1 font-medium">Maya</span>
+                            </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
                         <div class="flex justify-between font-semibold text-lg">
                             <span>Total</span>
                             <span>₱{{ total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
                         </div>
                     </div>
-                    <button class="w-full bg-blue-600 text-white py-2 rounded mt-6 hover:bg-blue-700">
+
+                    <div v-if="paymentError" class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-base">
+                    {{ paymentError }}
+                    </div>           
+
+                    <button @click="handleCheckout" class="cursor-pointer bg-gray-900 text-white hover:bg-gray-800 transition-colors w-full py-2 rounded mt-4">
                         Proceed to Checkout
                     </button>
                 </div>
@@ -123,7 +147,9 @@ export default {
             messageType: 'info',
             unavailableItems: [],
             userAddress: 'Loading...',
-            isAuthenticated: false
+            isAuthenticated: false,
+            selectedPayment: "",
+            paymentError: ""
         };
     },
     computed: {
@@ -133,7 +159,7 @@ export default {
             }, 0);
         },
         shippingFee() {
-            return 1000; // Fixed shipping fee of 1000 pesos
+            return 1000;
         },
         total() {
             return this.subtotal + this.shippingFee;
@@ -147,7 +173,7 @@ export default {
                 return true;
             } catch (error) {
                 this.isAuthenticated = false;
-                localStorage.removeItem('cartCount'); // Clear cart count if not authenticated
+                localStorage.removeItem('cartCount');
                 this.$router.push('/auth/login');
                 return false;
             }
@@ -229,10 +255,11 @@ export default {
         },
         async updateQuantity(itemId, newQuantity) {
             try {
-                const itemToUpdate = this.cartItems.find(item => item.id === itemId);
-                if (!itemToUpdate) return;
+                const itemIndex = this.cartItems.findIndex(item => item.id === itemId);
+                if (itemIndex === -1) return;
 
-                // If quantity becomes 0, remove the item
+                const itemToUpdate = this.cartItems[itemIndex];
+
                 if (newQuantity === 0) {
                     await this.removeFromCart(itemId);
                     return;
@@ -244,38 +271,73 @@ export default {
                     quantity: newQuantity
                 });
 
-                // Update cart count in localStorage
+                this.cartItems[itemIndex].quantity = newQuantity;
+
                 const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
                 localStorage.setItem('cartCount', Math.max(0, currentCount + quantityDifference));
-                
-                // Emit cart-updated event to update the navbar
                 window.dispatchEvent(new Event('cart-updated'));
-
-                await this.fetchCart(); // Refresh cart data
             } catch (error) {
                 console.error('Error updating quantity:', error);
             }
         },
         async removeFromCart(itemId) {
             try {
-                // Find the item quantity before removing it
-                const itemToRemove = this.cartItems.find(item => item.id === itemId);
-                if (!itemToRemove) return;
+                const itemIndex = this.cartItems.findIndex(item => item.id === itemId);
+                if (itemIndex === -1) return;
+
+                const itemToRemove = this.cartItems[itemIndex];
 
                 await api.delete(`/cart/${this.cart.cart_id}/items/${itemId}/`);
-                
-                // Update cart count in localStorage
+
+                this.cartItems.splice(itemIndex, 1);
+
                 const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
                 localStorage.setItem('cartCount', Math.max(0, currentCount - itemToRemove.quantity));
-                
-                // Emit cart-updated event to update the navbar
+
                 window.dispatchEvent(new Event('cart-updated'));
-                
-                await this.fetchCart(); // Refresh cart data
+
+                if (this.cartItems.length === 0) {
+                    this.cart = null;
+                    localStorage.setItem('cartCount', '0');
+                }
             } catch (error) {
                 console.error('Error removing item:', error);
             }
+        },
+        async handleCheckout() {
+        if (!this.selectedPayment) {
+            this.paymentError = "Please select a payment method.";
+            return;
         }
+
+        this.paymentError = "";
+
+        try {
+            const response = await axios.post("http://127.0.0.1:8000/payment/", {
+                method: this.selectedPayment
+            }, {
+                withCredentials: true,
+                headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+                }
+            });
+            if (response.status === 200) {
+                console.log(response.data.action_url);
+                console.log("response");
+                window.location.href = response.data.action_url;
+            }
+        } catch (error) {
+            if (error.response && error.response.status === 400) {
+                const errorMessage = error.response.data?.detail;
+                this.paymentError = errorMessage;
+            } else {
+                console.error("Payment failed:", error);
+                this.paymentError = "Payment Failed. Please try again.";
+                return;
+            }
+        }
+    }
     },
     async created() {
         const isAuth = await this.checkAuth();
@@ -285,7 +347,6 @@ export default {
         }
     },
     beforeUnmount() {
-        // Clean up if component is unmounted while not authenticated
         if (!this.isAuthenticated) {
             localStorage.removeItem('cartCount');
         }
