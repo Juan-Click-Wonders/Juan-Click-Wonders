@@ -92,9 +92,14 @@
                                 <router-link :to="`/product/${product.product_id}`"
                                     class="block bg-white rounded-xl overflow-hidden transform hover:scale-105 transition-all duration-300 h-full shadow-md hover:shadow-xl">
                                     <div class="relative">
-                                        <div class="h-40 flex items-center justify-center p-4 bg-gray-50">
-                                            <img v-if="product.image_url" :src="product.image_url" :alt="product.name"
-                                                class="h-full max-w-full object-contain transition-transform duration-300 hover:scale-110" />
+                                        <div v-if="product.image_url" class="product-image-container h-48 p-4">
+                                            <img :src="product.image_url" :alt="product.name"
+                                                class="h-full max-w-full transition-transform duration-300 hover:scale-110" />
+                                        </div>
+                                        <div v-else class="h-48 bg-gray-100 flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
                                         </div>
                                     </div>
                                     <div class="p-4">
@@ -161,9 +166,14 @@
                             :class="{'animate-fade-in-up-1': index < 2, 'animate-fade-in-up-2': index >= 2 && index < 4, 'animate-fade-in-up-3': index >= 4}">
                             <router-link :to="`/product/${product.product_id}`">
                                 <div class="relative overflow-hidden">
-                                    <div class="h-52 bg-gray-50 flex items-center justify-center p-6 transition-transform duration-500 group-hover:scale-105">
-                                        <img v-if="product.image_url" :src="product.image_url" :alt="product.name"
-                                            class="h-full w-full object-contain transition-all duration-500" />
+                                    <div v-if="product.image_url" class="product-image-container h-44 p-5 transition-transform duration-500 group-hover:scale-105">
+                                        <img :src="product.image_url" :alt="product.name"
+                                            class="h-full w-full transition-all duration-500" />
+                                    </div>
+                                    <div v-else class="h-44 bg-gray-100 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
                                     </div>
                                     <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent h-16 opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
                                 </div>
@@ -337,6 +347,25 @@ export default {
 
 .bg-pattern {
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Improved product image containers for white backgrounds */
+.product-image-container {
+    background: white;
+    border: 1px solid rgba(229, 231, 235, 0.5);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 0; /* Remove bottom padding */
+}
+
+.product-image-container img {
+    mix-blend-mode: multiply; /* This helps with white backgrounds */
+    object-fit: contain;
+    max-height: 95%; /* Increase max height for larger container */
+    transition: transform 0.3s ease;
 }
 
 .animate-fade-in {
