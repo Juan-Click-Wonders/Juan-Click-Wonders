@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from ProductManagement.models import Products, Category, Rating
 from UserManagement.models import UserProfile
+from django.core.files.uploadedfile import SimpleUploadedFile
+import django.core.exceptions
 
 User = get_user_model()
 
@@ -31,7 +33,7 @@ class TestRatingModels:
             sold_products=0,
             category=self.category
         )
-
+        
     def test_rating_creation(self, setup_data):
         rating = Rating.objects.create(
             product=self.product,
@@ -71,7 +73,6 @@ class TestRatingModels:
             description="Good product"
         )
 
-        # Create another user and their rating
         other_user = User.objects.create_user(
             email='other@test.com',
             password='testpass123'
@@ -101,11 +102,9 @@ class TestRatingModels:
             description="Good product"
         )
 
-        # Test if rating is deleted when product is deleted
         self.product.delete()
         assert Rating.objects.filter(id=rating.id).exists() is False
 
-        # Create new rating and test if it's deleted when user is deleted
         new_product = Products.objects.create(
             name='New Product',
             description='New Description',
@@ -123,3 +122,46 @@ class TestRatingModels:
         )
         self.profile.delete()
         assert Rating.objects.filter(id=new_rating.id).exists() is False
+
+    def test_rating_with_image(self, setup_data):
+        image = SimpleUploadedFile(
+            name="review.jpg",
+            content=b"fakeimagecontent",
+            content_type="image/jpeg"
+        )
+        rating = Rating.objects.create(
+            product=self.product,
+            user=self.profile,
+            rating=4,
+            description="Good product with image",
+            image_url=image
+        )
+        
+        assert rating.image_url.name.startswith('rating_images/')
+        assert 'review' in rating.image_url.name
+        assert rating.image_url.name.endswith('.jpg')
+        assert Rating.objects.filter(image_url__isnull=False).count() == 1
+
+    def test_rating_without_image(self, setup_data):
+        # Image is now optional, so this should work without raising an error
+        rating = Rating.objects.create(
+            product=self.product,
+            user=self.profile,
+            rating=4,
+            description="Good product without image",
+            image_url=None
+        )
+        assert not rating.image_url
+        assert str(rating.image_url) == ''
+        assert Rating.objects.filter(image_url='').count() == 1
+
+    def test_rating_with_invalid_image_url(self, setup_data):
+        with pytest.raises(ValidationError):
+            rating = Rating.objects.create(
+                product=self.product,
+                user=self.profile,
+                rating=4,
+                description="Good product",
+                image_url="invalid-url"
+            )
+            rating.full_clean()
