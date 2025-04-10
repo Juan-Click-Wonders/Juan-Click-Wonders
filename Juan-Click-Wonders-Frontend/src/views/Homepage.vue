@@ -29,8 +29,8 @@
                     <div class="overflow-hidden">
                         <div class="flex transition-transform duration-500 ease-in-out"
                             :style="{ transform: `translateX(-${currentSlide * 25}%)` }">
-                            <div v-for="product in topProducts" :key="product.id" class="w-1/4 flex-shrink-0 px-2">
-                                <router-link :to="`/product/${product.id}`"
+                            <div v-for="product in topProducts" :key="product.product_id" class="w-1/4 flex-shrink-0 px-2">
+                                <router-link :to="`/product/${product.product_id}`"
                                     class="block bg-white rounded-lg p-4 transform hover:scale-105 transition-transform duration-300 h-full shadow-md">
                                     <div class="h-36 flex items-center justify-center mb-3">
                                         <img v-if="product.image_url" :src="product.image_url" :alt="product.name"
@@ -84,8 +84,8 @@
 
                 <div v-else>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-                        <router-link v-for="product in featuredProducts" :key="product.id"
-                            :to="`/product/${product.id}`"
+                        <router-link v-for="product in featuredProducts" :key="product.product_id"
+                            :to="`/product/${product.product_id}`"
                             class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
                             <div class="h-48 bg-white flex items-center justify-center p-4">
                                 <img v-if="product.image_url" :src="product.image_url" :alt="product.name"

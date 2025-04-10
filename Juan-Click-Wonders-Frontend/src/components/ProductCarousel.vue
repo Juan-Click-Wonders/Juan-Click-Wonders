@@ -7,8 +7,8 @@
                     <h3 class="text-2xl font-semibold text-gray-200 mb-6 text-center">{{ categoryProducts.category }}
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        <router-link v-for="product in categoryProducts.products" :key="product.id"
-                            :to="`/product/${product.id}`"
+                        <router-link v-for="product in categoryProducts.products" :key="product.product_id"
+                            :to="`/product/${product.product_id}`"
                             class="bg-gray-800 rounded-lg p-6 transform hover:scale-105 transition-transform duration-300">
                             <div class="h-48 flex items-center justify-center mb-4">
                                 <img v-if="product.image_url" :src="product.image_url" :alt="product.name"
