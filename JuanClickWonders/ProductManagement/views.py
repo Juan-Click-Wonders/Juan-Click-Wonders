@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from urllib.parse import quote
 
@@ -75,6 +76,32 @@ class RatingsCreateView(generics.CreateAPIView):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    def create(self, request, *args, **kwargs):
+        # Debug incoming request data
+        print("Request Data Type:", type(request.data))
+        print("Request Data:", request.data)
+        print("Request FILES:", request.FILES)
+        
+        # Handle the file upload explicitly
+        data = request.data.copy()
+        
+        # Check if file exists in request.FILES
+        if 'image_url' in request.FILES:
+            print("Image found in request.FILES with key 'image_url'")
+            data['image_url'] = request.FILES['image_url']
+        elif 'image' in request.FILES:
+            print("Image found in request.FILES with key 'image'")
+            # Rename 'image' to 'image_url' to match our model field
+            data['image_url'] = request.FILES['image']
+        
+        # Create a serializer with our modified data
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=201, headers=headers)
 
     def perform_create(self, serializer):
         product_id = self.request.data.get('product')
