@@ -23,16 +23,8 @@ api.interceptors.request.use(
       // Set the token in the request headers
       config.headers['Authorization'] = `Bearer ${formattedToken}`;
       
-      // Log the request configuration
-      console.log('Request configuration:', {
-        url: config.url,
-        method: config.method,
-        headers: config.headers,
-        token: formattedToken,
-        fullUrl: `${config.baseURL}${config.url}`
-      });
     } else {
-      console.log('No token found in localStorage');
+      // No token found in localStorage
     }
     
     return config;
@@ -61,10 +53,6 @@ api.interceptors.response.use(
     });
 
     if (error.response?.status === 401) {
-      console.log("Unauthorized access detected");
-      console.log("Current token:", localStorage.getItem('access_token'));
-      console.log("Request headers:", error.config?.headers);
-      console.log("Full request URL:", `${error.config?.baseURL}${error.config?.url}`);
       // Don't redirect immediately, let the component handle it
     }
     return Promise.reject(error);
