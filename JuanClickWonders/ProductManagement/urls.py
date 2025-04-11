@@ -9,6 +9,9 @@ from ProductManagement.views import (
     CartListCreateApi,
     CartRetrieveUpdateDestroyApi,
     ProductStockStatusApi,
+    RatingsCreateView,
+    RatingsListView,
+    RatingsDetailUpdateDeleteView,
     PaymentAPI,
 )
 
@@ -25,14 +28,18 @@ urlpatterns = [
          ProductStockStatusApi.as_view(), name="product_stock_status"),
     path("category/", CategoryListCreateApi.as_view(), name="category_list"),
     path('category/create/', CategoryListCreateApi.as_view(), name='category_create'),
+    path("category/<int:category_id>", CategoryDetailApi.as_view(), name="category_detail"),
+    path('category/update/<int:category_id>/', CategoryDetailApi.as_view(), name='category-detail-update-delete'),
+    
+  
+    path('ratings/', RatingsListView.as_view(), name='ratings-list'),
+    path('ratings/create/', RatingsCreateView.as_view(), name='ratings-create'),
+    path('ratings/<int:pk>/', RatingsDetailUpdateDeleteView.as_view(), name='ratings-detail-update-delete'),
+    
     path("category/<int:category_id>",
          CategoryDetailApi.as_view(), name="category_detail"),
     path('category/update/<int:category_id>/',
          CategoryDetailApi.as_view(), name='category-detail-update-delete'),
-
-    # path('ratings/', RatingsListView.as_view(), name='ratings-list'),
-    # path('ratings/create/', RatingsCreateView.as_view(), name='ratings-create'),
-    # path('ratings/<int:pk>/', RatingsDetailUpdateDeleteView.as_view(), name='ratings-detail-update-delete'),
 
     path("cart/", CartListCreateApi.as_view(), name="cart-list"),
     path("cart/<int:pk>/", CartRetrieveUpdateDestroyApi.as_view(), name="cart-detail"),
