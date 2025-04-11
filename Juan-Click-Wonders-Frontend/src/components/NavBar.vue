@@ -50,8 +50,8 @@
                         </router-link>
 
                         <!-- User -->
-                        <div v-if="!isLoggedIn" class="flex items-center">
-                            <router-link to="/auth/login" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors">
+                        <div v-if="!authState" class="flex items-center">
+                            <router-link to="/auth/login" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 !text-gray-900 font-medium py-2 px-4 rounded-lg transition-colors" style="color: #1F2937 !important;">
                                 LOGIN
                             </router-link>
                         </div>
@@ -60,6 +60,7 @@
                                 <div class="h-8 w-8 rounded-full bg-yellow-500 flex items-center justify-center text-gray-900 font-bold">
                                     {{ userInitial }}
                                 </div>
+                                <span class="ml-2 text-sm hidden lg:inline">{{ userName }}</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -107,7 +108,7 @@
                                     {{ cartCount }}
                                 </span>
                             </router-link>
-                            <router-link v-if="!isLoggedIn" to="/auth/login" class="py-1 px-3 bg-yellow-500 text-gray-900 rounded-lg text-sm font-medium">
+                            <router-link v-if="!authState" to="/auth/login" class="py-1 px-3 bg-yellow-500 text-gray-900 !text-gray-900 rounded-lg text-sm font-medium" style="color: #1F2937 !important;">
                                 LOGIN
                             </router-link>
                             <div v-else class="h-8 w-8 rounded-full bg-yellow-500 flex items-center justify-center text-gray-900 font-bold" @click="toggleUserMenu">
@@ -147,13 +148,13 @@
                             <router-link to="/about" @click="showMobileMenu = false" class="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors">
                                 ABOUT
                             </router-link>
-                            <router-link v-if="isLoggedIn" to="/profile" @click="showMobileMenu = false" class="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                            <router-link v-if="authState" to="/profile" @click="showMobileMenu = false" class="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors">
                                 PROFILE
                             </router-link>
-                            <router-link v-if="isLoggedIn" to="/orders" @click="showMobileMenu = false" class="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                            <router-link v-if="authState" to="/orders" @click="showMobileMenu = false" class="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors">
                                 YOUR ORDERS
                             </router-link>
-                            <a v-if="isLoggedIn" href="#" @click.prevent="logout" class="block px-3 py-2 rounded-md text-red-400 hover:bg-gray-700 transition-colors">
+                            <a v-if="authState" href="#" @click.prevent="logout" class="block px-3 py-2 rounded-md text-red-400 hover:bg-gray-700 transition-colors">
                                 LOGOUT
                             </a>
                         </div>
@@ -166,7 +167,7 @@
 
 <script>
 import { useRoute } from "vue-router";
-import { computed, ref, onMounted, onUnmounted } from "vue";
+import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 
 export default {
     setup() {
@@ -178,6 +179,8 @@ export default {
         const showUserMenu = ref(false);
         const showMobileMenu = ref(false);
         const userMenuContainer = ref(null);
+        const authState = ref(localStorage.getItem('isAuthenticated') === 'true');
+        const userName = ref(localStorage.getItem('userName') || 'User');
 
         const updateCartCount = () => {
             if (localStorage.getItem('isAuthenticated')) {
@@ -195,13 +198,24 @@ export default {
             }
         };
 
+        const updateAuthState = () => {
+            authState.value = localStorage.getItem('isAuthenticated') === 'true';
+            // Update userName when auth state changes
+            userName.value = localStorage.getItem('userName') || 'User';
+            console.log('Auth state updated:', authState.value, 'User name:', userName.value);
+        };
+
         onMounted(() => {
             updateCartCount();
+            updateAuthState();
+            
             // Listen for storage events from other tabs/windows
             window.addEventListener('storage', updateCartCount);
+            window.addEventListener('storage', updateAuthState);
             // Listen for custom events from the same window
             window.addEventListener('cart-updated', updateCartCount);
             // Listen for auth state changes
+            window.addEventListener('auth-state-changed', updateAuthState);
             window.addEventListener('auth-state-changed', updateCartCount);
             // Listen for clicks outside user menu
             document.addEventListener('click', handleClickOutside);
@@ -209,8 +223,10 @@ export default {
 
         onUnmounted(() => {
             window.removeEventListener('storage', updateCartCount);
+            window.removeEventListener('storage', updateAuthState);
             window.removeEventListener('cart-updated', updateCartCount);
             window.removeEventListener('auth-state-changed', updateCartCount);
+            window.removeEventListener('auth-state-changed', updateAuthState);
             document.removeEventListener('click', handleClickOutside);
         });
 
@@ -219,22 +235,30 @@ export default {
             cartCount, 
             showUserMenu, 
             showMobileMenu,
-            userMenuContainer
+            userMenuContainer,
+            authState,
+            userName
         };
     },
     computed: {
-        isLoggedIn() {
-            return localStorage.getItem('isAuthenticated') === 'true';
-        },
         userInitial() {
-            // Get the user's name from localStorage or use a default
-            const userName = localStorage.getItem('userName') || 'User';
-            return userName.charAt(0).toUpperCase();
+            // Get the user's name from the reactive reference
+            return this.userName.charAt(0).toUpperCase();
         }
     },
     data() {
         return {
             searchQuery: '',
+        }
+    },
+    watch: {
+        // Watch for auth state changes from external sources
+        '$route': {
+            handler() {
+                // This route watcher no longer needs to update authState manually
+                // as we now have proper event handling
+            },
+            immediate: true
         }
     },
     methods: {

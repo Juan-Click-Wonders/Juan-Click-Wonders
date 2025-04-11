@@ -107,19 +107,41 @@ class RatingsCreateView(generics.CreateAPIView):
         product_id = self.request.data.get('product')
         if Rating.objects.filter(user=self.request.user.profile, product_id=product_id).exists():
             raise PermissionDenied("You have already rated this product")
-        serializer.save(user=self.request.user.profile)
+            
+        # Get the user's name from the profile or user object
+        user_name = None
+        if hasattr(self.request.user, 'first_name') and self.request.user.first_name:
+            user_name = self.request.user.first_name
+        elif hasattr(self.request.user.profile, 'first_name') and self.request.user.profile.first_name:
+            user_name = self.request.user.profile.first_name
+        elif hasattr(self.request.user, 'username'):
+            user_name = self.request.user.username
+        
+        # If user_name was provided in the request, use it instead (for frontend compatibility)
+        if 'user_name' in self.request.data:
+            user_name = self.request.data.get('user_name')
+            
+        serializer.save(user=self.request.user.profile, user_name=user_name)
 
 class RatingsListView(generics.ListAPIView):
     serializer_class = RatingSerializer
-    permission_classes = [IsAuthenticated]
-
+    
+    def get_permissions(self):
+        # Allow anonymous users to view ratings, but require auth for user-specific queries
+        if self.request.query_params.get('user_ratings'):
+            return [IsAuthenticated()]
+        return []
+        
     def get_queryset(self):
         queryset = Rating.objects.all()
         product_id = self.request.query_params.get('product', None)
         if product_id:
             queryset = queryset.filter(product_id=product_id)
         if self.request.query_params.get('user_ratings'):
-            queryset = queryset.filter(user=self.request.user.profile)
+            if self.request.user.is_authenticated:
+                queryset = queryset.filter(user=self.request.user.profile)
+            else:
+                queryset = Rating.objects.none()  # Return empty queryset for unauthenticated users
         return queryset
 
 class RatingsDetailUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):

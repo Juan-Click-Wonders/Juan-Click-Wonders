@@ -39,6 +39,7 @@ class Rating(models.Model):
     ])
     description = models.TextField()
     created_at = models.DateField(auto_now_add=True)
+    user_name = models.CharField(max_length=255, null=True, blank=True)
     image_url = models.ImageField(
         upload_to="rating_images/",
         null=True,

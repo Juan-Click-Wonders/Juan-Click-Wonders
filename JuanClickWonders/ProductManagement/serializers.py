@@ -90,9 +90,10 @@ class RatingSerializer(serializers.ModelSerializer):
     # Add a field that will accept either a string URL or a file upload
     class Meta:
         model = Rating
-        fields = "__all__"
+        fields = ['id', 'product', 'user', 'rating', 'description', 'created_at', 'image_url', 'user_name']
         extra_kwargs = {
-            'image_url': {'required': False}
+            'image_url': {'required': False},
+            'user_name': {'required': False}
         }
 
     def validate_rating(self, value):
@@ -101,11 +102,30 @@ class RatingSerializer(serializers.ModelSerializer):
         return value
         
     def to_representation(self, instance):
-        """Convert the image URL to an absolute URL in the output"""
+        """Convert the image URL to an absolute URL in the output and ensure user_name is populated"""
         ret = super().to_representation(instance)
         request = self.context.get("request")
+        
+        # Handle image URL
         if request and instance.image_url:
             ret['image_url'] = request.build_absolute_uri(instance.image_url.url)
+        
+        # Ensure user_name is populated
+        if not ret.get('user_name') and instance.user:
+            # Try to get the user's name from various possible sources
+            user_profile = instance.user
+            user = getattr(user_profile, 'user', None)
+            
+            if user_profile and hasattr(user_profile, 'first_name') and user_profile.first_name:
+                ret['user_name'] = user_profile.first_name
+            elif user and hasattr(user, 'first_name') and user.first_name:
+                ret['user_name'] = user.first_name
+            elif user and hasattr(user, 'username'):
+                ret['user_name'] = user.username
+            else:
+                # Default to first letter of related username or 'User'
+                ret['user_name'] = getattr(user, 'username', 'User')
+        
         return ret
 
 
