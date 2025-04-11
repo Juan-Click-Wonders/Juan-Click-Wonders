@@ -243,8 +243,6 @@ export default {
                 }
             });
             if (response.status === 200) {
-                console.log(response.data.action_url);
-                console.log("response");
                 window.location.href = response.data.action_url;
             }
         } catch (error) {

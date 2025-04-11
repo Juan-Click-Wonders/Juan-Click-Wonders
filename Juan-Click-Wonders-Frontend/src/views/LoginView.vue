@@ -47,8 +47,6 @@
       async login() {
         this.message = ""; // Clear any existing message
         try {
-          console.log("Attempting login...");
-          
           const response = await axios.post("http://127.0.0.1:8000/api/auth/login/", {
             email: this.email,
             password: this.password
@@ -60,12 +58,6 @@
             }
           });
 
-          console.log("Login response:", {
-            status: response.status,
-            statusText: response.statusText,
-            data: response.data
-          });
-
           if (response.status === 200) {
             // The backend sets HTTP-only cookies automatically
             localStorage.setItem('isAuthenticated', 'true');
@@ -75,11 +67,8 @@
             window.dispatchEvent(new Event('cart-updated'));
             window.dispatchEvent(new Event('auth-state-changed'));
             
-            console.log("Login successful - Navigating to profile...");
-            
             try {
               await this.$router.push("/profile/");
-              console.log("Navigation successful");
             } catch (routerError) {
               console.error("Router navigation error:", routerError);
               window.location.href = "/profile/";
