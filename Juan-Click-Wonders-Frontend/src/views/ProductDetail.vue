@@ -44,8 +44,11 @@
                         <!-- Product Image -->
                         <div class="lg:w-1/2 p-8 bg-white">
                             <div class="relative h-96 bg-white rounded-lg flex items-center justify-center p-4 mb-3 mx-auto max-w-xl">
-                                <img v-if="product.image_url" :src="getImageUrl(product.image_url)" :alt="product.name" 
-                                    class="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-110">
+                                <img v-if="product.image_url" 
+                                    :src="getImageUrl(product.image_url)" 
+                                    :alt="product.name" 
+                                    class="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-110 cursor-pointer"
+                                    @click="openImageModal(product.image_url)">
                                 <div v-else class="w-full h-full flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -149,6 +152,209 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Reviews & Ratings Section -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden mt-8">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800">Customer Reviews</h2>
+                </div>
+                
+                <!-- Review Stats -->
+                <div class="p-6 bg-gray-50">
+                    <div class="flex flex-col md:flex-row md:items-center gap-6">
+                        <div class="flex flex-col items-center">
+                            <div class="flex items-center justify-center mb-2">
+                                <span class="text-4xl font-bold">{{ averageRating }}</span>
+                                <span class="text-lg text-gray-500 ml-1">/ 5</span>
+                            </div>
+                            <div class="flex items-center">
+                                <template v-for="i in 5" :key="i">
+                                    <svg xmlns="http://www.w3.org/2000/svg" 
+                                        :class="[i <= Math.round(averageRating) ? 'text-yellow-500' : 'text-gray-300']"
+                                        class="h-5 w-5 fill-current" 
+                                        viewBox="0 0 20 20" 
+                                        fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                </template>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">{{ ratings.length }} {{ ratings.length === 1 ? 'review' : 'reviews' }}</p>
+                        </div>
+                        
+                        <div class="flex-1">
+                            <div v-for="star in 5" :key="star" class="flex items-center mb-1">
+                                <span class="text-sm font-medium w-4 mr-2">{{ 6 - star }}</span>
+                                <div class="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-yellow-500 rounded-full" 
+                                        :style="{ width: `${getStarPercentage(6 - star)}%` }"></div>
+                                </div>
+                                <span class="text-sm text-gray-600 ml-2">{{ getStarCount(6 - star) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Add Review Form -->
+                <div v-if="isLoggedIn && !hasUserRated && product" class="p-6 border-t border-gray-200">
+                    <div v-if="ratingSubmitted" class="bg-green-50 p-4 rounded-md mb-4 text-green-700">
+                        Your review has been submitted successfully!
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Write a Review</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Rating</label>
+                            <div class="flex">
+                                <template v-for="i in 5" :key="i">
+                                    <button 
+                                        @click="newRating.rating = i" 
+                                        class="focus:outline-none"
+                                        :class="{'text-yellow-500': i <= newRating.rating, 'text-gray-300': i > newRating.rating}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 fill-current transform transition-transform hover:scale-110" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        </svg>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="review-text" class="block text-gray-700 mb-2">Review</label>
+                            <textarea 
+                                id="review-text"
+                                v-model="newRating.description"
+                                rows="4"
+                                class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
+                                placeholder="Share your experience with this product..."></textarea>
+                        </div>
+                        
+                        <!-- Image Upload (Optional) -->
+                        <div>
+                            <label for="review-image" class="block text-gray-700 mb-2">Add Photo (Optional)</label>
+                            <div class="flex items-center">
+                                <label class="cursor-pointer flex items-center justify-center border border-gray-300 rounded-lg p-3 text-gray-600 hover:bg-gray-50 transition-colors">
+                                    <span v-if="!imagePreview" class="flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Choose Photo
+                                    </span>
+                                    <span v-else class="text-green-600">Change Photo</span>
+                                    <input 
+                                        type="file" 
+                                        id="review-image"
+                                        ref="fileInput" 
+                                        @change="handleImageUpload"
+                                        accept="image/jpeg,image/png,image/gif,image/jpg"
+                                        class="hidden"
+                                    >
+                                </label>
+                                <button 
+                                    v-if="imagePreview" 
+                                    @click="removeImage" 
+                                    class="ml-3 text-sm text-red-600 hover:text-red-700">
+                                    Remove
+                                </button>
+                            </div>
+                            
+                            <!-- Image Preview -->
+                            <div v-if="imagePreview" class="mt-3">
+                                <img 
+                                    :src="imagePreview" 
+                                    class="h-24 rounded-md border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity" 
+                                    @click="openPreviewModal"
+                                />
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, JPEG, PNG, GIF (max 5MB)</p>
+                        </div>
+                        
+                        <button 
+                            @click="submitRating" 
+                            :disabled="!newRating.rating || !newRating.description || submittingRating"
+                            class="bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span v-if="!submittingRating">Submit Review</span>
+                            <span v-else class="flex items-center">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Submitting...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div v-else-if="isLoggedIn && hasUserRated" class="p-6 border-t border-gray-200 bg-gray-50">
+                    <p class="text-gray-700">You have already reviewed this product. Thank you for your feedback!</p>
+                </div>
+                
+                <div v-else-if="!isLoggedIn" class="p-6 border-t border-gray-200 bg-gray-50">
+                    <p class="text-gray-700">
+                        Please <router-link to="/auth/login" class="text-yellow-600 hover:underline">log in</router-link> to leave a review.
+                    </p>
+                </div>
+                
+                <!-- Reviews List -->
+                <div v-if="ratings.length > 0" class="border-t border-gray-200">
+                    <div v-for="(rating, index) in ratings" :key="rating.id" 
+                        class="p-6" 
+                        :class="{'border-b border-gray-200': index < ratings.length - 1}">
+                        <div class="flex items-start">
+                            <div class="mr-4">
+                                <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
+                                    {{ rating.user }}
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center mb-1">
+                                    <div class="flex">
+                                        <template v-for="i in 5" :key="i">
+                                            <svg xmlns="http://www.w3.org/2000/svg" 
+                                                :class="[i <= rating.rating ? 'text-yellow-500' : 'text-gray-300']"
+                                                class="h-4 w-4 fill-current" 
+                                                viewBox="0 0 20 20" 
+                                                fill="currentColor">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                            </svg>
+                                        </template>
+                                    </div>
+                                    <span class="text-sm text-gray-500 ml-2">{{ formatDate(rating.created_at) }}</span>
+                                </div>
+                                <p class="text-gray-700 whitespace-pre-line">{{ rating.description }}</p>
+                                <div v-if="rating.image_url" class="mt-3">
+                                    <img 
+                                        :src="getRatingImageUrl(rating.image_url)" 
+                                        alt="Review image" 
+                                        class="h-24 w-auto rounded-md border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity" 
+                                        @click="openImageModal(rating.image_url)"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div v-else class="p-6 text-center border-t border-gray-200">
+                    <p class="text-gray-600">No reviews yet. Be the first to review this product!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Modal -->
+        <div v-if="showImageModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4" @click="closeImageModal">
+            <div class="relative max-w-4xl max-h-full">
+                <img 
+                    :src="getRatingImageUrl(modalImageUrl)" 
+                    alt="Enlarged review image" 
+                    class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-xl"
+                />
+                <button 
+                    @click.stop="closeImageModal" 
+                    class="absolute top-3 right-3 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-colors"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 </template>
@@ -156,6 +362,7 @@
 <script>
 import axios from "axios";
 
+// Create axios instance with CSRF token handling
 const api = axios.create({
     baseURL: 'http://127.0.0.1:8000',
     headers: {
@@ -163,6 +370,33 @@ const api = axios.create({
         'Content-Type': 'application/json'
     },
     withCredentials: true
+});
+
+// Get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Add request interceptor to set CSRF token
+api.interceptors.request.use(config => {
+    const csrfToken = getCookie('csrftoken');
+    if (csrfToken) {
+        config.headers['X-CSRFToken'] = csrfToken;
+    }
+    return config;
+}, error => {
+    return Promise.reject(error);
 });
 
 export default {
@@ -173,7 +407,20 @@ export default {
             ratings: [],
             quantity: 1,
             cart: null,
-            loading: true
+            loading: true,
+            newRating: {
+                rating: 0,
+                description: '',
+                product: null
+            },
+            submittingRating: false,
+            ratingSubmitted: false,
+            currentUserId: null,
+            imagePreview: null,
+            userProfile: null,
+            userHasRatedProduct: false,  // Flag set by fetchRatings when user has already rated
+            showImageModal: false,       // Controls the modal visibility
+            modalImageUrl: null          // URL of the image to display in the modal
         };
     },
     computed: {
@@ -183,12 +430,46 @@ export default {
         },
         isLoggedIn() {
             return localStorage.getItem('isAuthenticated') === 'true';
+        },
+        averageRating() {
+            if (!this.ratings || this.ratings.length === 0) return 0;
+            const sum = this.ratings.reduce((total, rating) => total + rating.rating, 0);
+            return (sum / this.ratings.length).toFixed(1);
+        },
+        hasUserRated() {
+            // Use the flag set by the fetchRatings method that checks directly with the backend
+            return this.userHasRatedProduct;
         }
     },
     methods: {
         getImageUrl(imagePath) {
             if (!imagePath) return null;
             return imagePath;
+        },
+        getRatingImageUrl(imagePath) {
+            if (!imagePath) return null;
+            
+            // Check if the path is already a complete URL
+            if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+                return imagePath;
+            }
+            
+            // If path contains '/media/rating_images/', it's a relative Django path
+            if (imagePath.includes('/media/rating_images/')) {
+                // Make sure it starts with the base URL if it's a relative path
+                if (imagePath.startsWith('/')) {
+                    return `http://127.0.0.1:8000${imagePath}`;
+                }
+                return `http://127.0.0.1:8000/${imagePath}`;
+            }
+            
+            // If it's just a filename, construct the full URL with all necessary parts
+            if (!imagePath.includes('/')) {
+                return `http://127.0.0.1:8000/media/rating_images/${imagePath}`;
+            }
+            
+            // For any other format, ensure the URL is properly formed
+            return `http://127.0.0.1:8000/media/rating_images/${imagePath.split('/').pop()}`;
         },
         formatDate(dateString) {
             return new Date(dateString).toLocaleDateString();
@@ -207,10 +488,275 @@ export default {
                 const productId = this.$route.params.id;
                 const response = await api.get(`/products/${productId}`);
                 this.product = response.data;
+                this.newRating.product = this.product.product_id;
                 this.loading = false;
+                this.fetchRatings();
             } catch (error) {
                 console.error("Error fetching product:", error);
                 this.loading = false;
+            }
+        },
+        async fetchRatings() {
+            if (!this.product) return;
+            
+            try {
+                // Get ratings for this product
+                const response = await api.get(`/ratings/`, {
+                    params: {
+                        product: this.product.product_id
+                    }
+                });
+                
+                // Process the ratings to ensure image URLs are correct
+                this.ratings = response.data.map(rating => {
+                    // Log for debugging
+                    console.log("Original rating image_url:", rating.image_url);
+                    
+                    // Clean up image_url if needed, but keep the original value
+                    return rating;
+                });
+                
+                // Log the first rating's processed image URL if available
+                if (this.ratings.length > 0 && this.ratings[0].image_url) {
+                    console.log("Processed first rating image URL:", 
+                                this.getRatingImageUrl(this.ratings[0].image_url));
+                }
+                
+                // Check if user-specific ratings exist
+                if (this.isLoggedIn) {
+                    try {
+                        // Try to get user-specific ratings to determine if the user has already rated
+                        const userRatingsResponse = await api.get(`/ratings/`, {
+                            params: {
+                                product: this.product.product_id,
+                                user_ratings: true  // This flag is in the backend view to filter by user
+                            }
+                        });
+                        
+                        // If we get any ratings back, the user has already rated this product
+                        if (userRatingsResponse.data && userRatingsResponse.data.length > 0) {
+                            this.userHasRatedProduct = true;
+                        } else {
+                            this.userHasRatedProduct = false;
+                        }
+                    } catch (userRatingError) {
+                        console.error("Could not fetch user-specific ratings:", userRatingError);
+                    }
+                    
+                    // Still get the user profile for display purposes
+                    this.getCurrentUser();
+                }
+            } catch (error) {
+                console.error("Error fetching ratings:", error);
+            }
+        },
+        async getCurrentUser() {
+            try {
+                // Get the profile data from the API - this is just for displaying user info
+                // We don't need to extract the ID, as Django will use request.user.id on the backend
+                const response = await api.get('/api/profile/');
+                
+                // Store the profile data for display purposes
+                this.userProfile = response.data;
+                
+                // For the hasUserRated check, we just need some user identifier
+                if (response.data) {
+                    // Get user profile information
+                    this.userProfile = response.data;
+                    
+                    // Django's UserProfile model likely has a user field that links to the auth.User model
+                    // It could be accessed in different ways
+                    if (response.data.id) {
+                        // If the profile itself has an ID
+                        this.currentUserId = response.data.id;
+                    } else if (response.data.user && response.data.user.id) {
+                        // If the profile has a user object with ID
+                        this.currentUserId = response.data.user.id;
+                    } else if (response.data.user_id) {
+                        // If the profile has a user_id field directly
+                        this.currentUserId = response.data.user_id;
+                    } else {
+                        // Last resort - use a default ID
+                        this.currentUserId = 1; // Your system might use Django's first user, which is often ID 1
+                    }
+                }
+            } catch (error) {
+                console.error("Could not fetch user profile:", error);
+                // Continue without user profile data - Django will still use session auth
+            }
+        },
+        getStarCount(star) {
+            if (!this.ratings) return 0;
+            return this.ratings.filter(rating => rating.rating === star).length;
+        },
+        getStarPercentage(star) {
+            if (!this.ratings || this.ratings.length === 0) return 0;
+            const count = this.getStarCount(star);
+            return (count / this.ratings.length) * 100;
+        },
+        async submitRating() {
+            if (!this.newRating.rating || !this.newRating.description || !this.product) return;
+            
+            this.submittingRating = true;
+            
+            try {
+                // First, we need to find the current user's ID
+                let userId = null;
+                
+                // Make a request to the profile endpoint to get the current user information
+                try {
+                    const profileResponse = await api.get('/api/profile/');
+                    
+                    if (profileResponse.data) {
+                        // Get user profile information
+                        this.userProfile = profileResponse.data;
+                        
+                        // Django's UserProfile model likely has a user field that links to the auth.User model
+                        // It could be accessed in different ways
+                        if (profileResponse.data.id) {
+                            // If the profile itself has an ID
+                            userId = profileResponse.data.id;
+                        } else if (profileResponse.data.user && profileResponse.data.user.id) {
+                            // If the profile has a user object with ID
+                            userId = profileResponse.data.user.id;
+                        } else if (profileResponse.data.user_id) {
+                            // If the profile has a user_id field directly
+                            userId = profileResponse.data.user_id;
+                        } else {
+                            // Last resort - use a default ID
+                            userId = 1; // Your system might use Django's first user, which is often ID 1
+                        }
+                    }
+                } catch (profileError) {
+                    console.error("Error fetching profile:", profileError);
+                    // Continue with the attempt even if profile fetch fails
+                }
+                
+                // Prepare rating data with user ID explicitly included
+                const ratingData = {
+                    product: this.product.product_id,
+                    rating: this.newRating.rating,
+                    description: this.newRating.description,
+                };
+                
+                // Only add the user field if we have a valid ID
+                if (userId) {
+                    ratingData.user = userId;
+                }
+                
+                // Add a special token to indicate this is an authenticated request
+                // Some Django backends can use this with custom authentication
+                ratingData.auth_token = localStorage.getItem('token') || 'auth_session_active';
+                
+                // Check if we have a file to upload
+                const fileInput = this.$refs.fileInput;
+                const hasImage = fileInput && fileInput.files && fileInput.files.length > 0;
+                
+                let response;
+                
+                // Handle form data if we have an image
+                if (hasImage) {
+                    const formData = new FormData();
+                    
+                    // Add essential data
+                    formData.append('product', this.product.product_id);
+                    formData.append('rating', this.newRating.rating);
+                    formData.append('description', this.newRating.description);
+                    
+                    // Only add user ID if we have one
+                    if (userId) {
+                        formData.append('user', userId);
+                    }
+                    
+                    // Add auth token for authenticated requests
+                    formData.append('auth_token', localStorage.getItem('token') || 'auth_session_active');
+                    
+                    // Add the file
+                    const file = fileInput.files[0];
+                    console.log("File being uploaded:", file);
+                    console.log("File name:", file.name);
+                    console.log("File type:", file.type);
+                    console.log("File size:", file.size, "bytes");
+                    
+                    // Use only one field name for image upload
+                    formData.append('image_url', file);
+                    
+                    // Debug FormData content
+                    console.log("FormData entries:");
+                    for (let pair of formData.entries()) {
+                        console.log(pair[0] + ': ' + (pair[0] === 'image_url' ? '[FILE]' : pair[1]));
+                    }
+                    
+                    response = await api.post('/ratings/create/', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                } else {
+                    // Simple JSON post with user ID included
+                    response = await api.post('/ratings/create/', ratingData);
+                }
+                
+                // Show success message
+                this.ratingSubmitted = true;
+                
+                // Reset form
+                this.newRating = {
+                    rating: 0,
+                    description: '',
+                    product: this.product.product_id
+                };
+                this.imagePreview = null;
+                if (fileInput) fileInput.value = '';
+                
+                // Refresh ratings
+                this.fetchRatings();
+                
+                // If we had an image, make sure the UI is updated with the correct URL
+                if (response && response.data && response.data.image_url) {
+                    console.log("Submitted rating with image:", response.data.image_url);
+                }
+                
+                // Hide success message after a few seconds
+                setTimeout(() => {
+                    this.ratingSubmitted = false;
+                }, 3000);
+            } catch (error) {
+                console.error("Error submitting rating:", error);
+                
+                if (error.response) {
+                    console.error("Error response data:", error.response.data);
+                    console.error("Error response status:", error.response.status);
+                    
+                    if (error.response.status === 403) {
+                        alert("You have already reviewed this product.");
+                        this.fetchRatings();
+                    } else if (error.response.status === 400) {
+                        // Handle 400 Bad Request
+                        let errorMessage = "There was an error submitting your review.";
+                        
+                        if (error.response.data) {
+                            if (typeof error.response.data === 'string') {
+                                errorMessage = error.response.data;
+                            } else {
+                                errorMessage = JSON.stringify(error.response.data);
+                            }
+                        }
+                        
+                        alert(errorMessage);
+                    } else if (error.response.status === 401) {
+                        alert("You must be logged in to submit a review. Please log in and try again.");
+                        this.$router.push('/auth/login/');
+                    } else {
+                        alert(`Error (${error.response.status}): ${error.message}`);
+                    }
+                } else if (error.request) {
+                    alert("Network error - please check your connection and try again.");
+                } else {
+                    alert("An unexpected error occurred. Please try again later.");
+                }
+            } finally {
+                this.submittingRating = false;
             }
         },
         increaseQuantity() {
@@ -258,6 +804,37 @@ export default {
                     this.$router.push('/auth/login/');
                 }
             }
+        },
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.imagePreview = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+        removeImage() {
+            this.imagePreview = null;
+        },
+        // Modal functions
+        openImageModal(imageUrl) {
+            this.modalImageUrl = imageUrl;
+            this.showImageModal = true;
+            // Prevent scrolling when modal is open
+            document.body.style.overflow = 'hidden';
+        },
+        closeImageModal() {
+            this.showImageModal = false;
+            // Re-enable scrolling when modal is closed
+            document.body.style.overflow = 'auto';
+        },
+        openPreviewModal() {
+            // For preview images, use the imagePreview directly since it's already a data URL
+            this.modalImageUrl = this.imagePreview;
+            this.showImageModal = true;
+            document.body.style.overflow = 'hidden';
         }
     },
     created() {

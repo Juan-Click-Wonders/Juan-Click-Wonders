@@ -87,20 +87,25 @@ class CartSerializer(serializers.ModelSerializer):
         return sum(item.quantity * item.product.price for item in obj.cart_items.all())
     
 class RatingSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
+    # Add a field that will accept either a string URL or a file upload
     class Meta:
         model = Rating
         fields = "__all__"
+        extra_kwargs = {
+            'image_url': {'required': False}
+        }
 
     def validate_rating(self, value):
         if not 1 <= value <= 5:
             raise serializers.ValidationError("Rating must be between 1 and 5")
         return value
-
-    def get_image_url(self, obj):
+        
+    def to_representation(self, instance):
+        """Convert the image URL to an absolute URL in the output"""
+        ret = super().to_representation(instance)
         request = self.context.get("request")
-        if obj.image_url:
-            return request.build_absolute_uri(f"/media/rating_images/{obj.image_url}")
-        return None
+        if request and instance.image_url:
+            ret['image_url'] = request.build_absolute_uri(instance.image_url.url)
+        return ret
 
 
