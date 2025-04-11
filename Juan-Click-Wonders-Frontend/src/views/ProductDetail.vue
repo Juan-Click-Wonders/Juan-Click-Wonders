@@ -144,7 +144,12 @@
                                         </button>
                                     </div>
                                     <p v-if="!isLoggedIn" class="text-center text-sm text-gray-600 mt-3">
-                                        <router-link to="/auth/login/" class="text-yellow-600 hover:underline">Log in</router-link> to add items to your cart
+                                        <router-link to="/auth/login/" class="bg-black text-white px-3 py-1 rounded-lg font-medium hover:bg-gray-800 transition-colors inline-flex items-center text-sm text-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                                            </svg>
+                                            Log in
+                                        </router-link> to add items to your cart
                                     </p>
                                 </div>
                             </div>
@@ -288,7 +293,12 @@
                 
                 <div v-else-if="!isLoggedIn" class="p-6 border-t border-gray-200 bg-gray-50">
                     <p class="text-gray-700">
-                        Please <router-link to="/auth/login" class="text-yellow-600 hover:underline">log in</router-link> to leave a review.
+                        Please <router-link to="/auth/login" class="bg-black text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors inline-flex items-center text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                            </svg>
+                            Log in
+                        </router-link> to leave a review.
                     </p>
                 </div>
                 
