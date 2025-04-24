@@ -340,7 +340,7 @@ class WishlistAddAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        product_id = request.data.get('product_id')
+        product_id = self.kwargs.get('product_id')
         if not product_id:
             return Response(
                 {"error": "Product ID is required."},
@@ -374,7 +374,7 @@ class WishlistRemoveAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, *args, **kwargs):
-        product_id = request.data.get('product_id')
+        product_id = self.kwargs.get('product_id')
         if not product_id:
             return Response(
                 {"error": "Product ID is required."},
@@ -404,7 +404,11 @@ class WishlistRetrieveAPI(APIView):
     def get(self, request, *args, **kwargs):
         user_profile = self.request.user.profile
         wishlist = user_profile.wishlist.products.all()
-        serializer = ProductsSerializer(wishlist, many=True)
+        serializer = ProductsSerializer(
+            wishlist,
+            many=True,
+            context={'request': request}
+        )
         return Response(
             serializer.data,
             status=status.HTTP_200_OK
