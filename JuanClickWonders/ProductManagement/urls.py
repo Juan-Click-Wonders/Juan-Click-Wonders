@@ -13,6 +13,7 @@ from ProductManagement.views import (
     RatingsListView,
     RatingsDetailUpdateDeleteView,
     PaymentAPI,
+    UserOrdersApi
 )
 
 urlpatterns = [
@@ -47,5 +48,6 @@ urlpatterns = [
          CartItemListCreateApi.as_view(), name="cartitem-list"),
     path("cart/<int:cart_id>/items/<int:pk>/",
          CartItemRetrieveUpdateDestroyApi.as_view(), name="cartitem-detail"),
-    path("payment/", PaymentAPI.as_view(), name="payment")
+    path("payment/", PaymentAPI.as_view(), name="payment"),
+    path('orders/', UserOrdersApi.as_view(), name='user_orders')
 ]
