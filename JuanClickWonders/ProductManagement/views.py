@@ -72,6 +72,7 @@ class CategoryDetailApi(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CategorySerializer
     lookup_field = "category_id"
 
+
 class RatingsCreateView(generics.CreateAPIView):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
@@ -83,10 +84,10 @@ class RatingsCreateView(generics.CreateAPIView):
         print("Request Data Type:", type(request.data))
         print("Request Data:", request.data)
         print("Request FILES:", request.FILES)
-        
+
         # Handle the file upload explicitly
         data = request.data.copy()
-        
+
         # Check if file exists in request.FILES
         if 'image_url' in request.FILES:
             print("Image found in request.FILES with key 'image_url'")
@@ -95,7 +96,7 @@ class RatingsCreateView(generics.CreateAPIView):
             print("Image found in request.FILES with key 'image'")
             # Rename 'image' to 'image_url' to match our model field
             data['image_url'] = request.FILES['image']
-        
+
         # Create a serializer with our modified data
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -107,7 +108,7 @@ class RatingsCreateView(generics.CreateAPIView):
         product_id = self.request.data.get('product')
         if Rating.objects.filter(user=self.request.user.profile, product_id=product_id).exists():
             raise PermissionDenied("You have already rated this product")
-            
+
         # Get the user's name from the profile or user object
         user_name = None
         if hasattr(self.request.user, 'first_name') and self.request.user.first_name:
@@ -116,22 +117,23 @@ class RatingsCreateView(generics.CreateAPIView):
             user_name = self.request.user.profile.first_name
         elif hasattr(self.request.user, 'username'):
             user_name = self.request.user.username
-        
+
         # If user_name was provided in the request, use it instead (for frontend compatibility)
         if 'user_name' in self.request.data:
             user_name = self.request.data.get('user_name')
-            
+
         serializer.save(user=self.request.user.profile, user_name=user_name)
+
 
 class RatingsListView(generics.ListAPIView):
     serializer_class = RatingSerializer
-    
+
     def get_permissions(self):
         # Allow anonymous users to view ratings, but require auth for user-specific queries
         if self.request.query_params.get('user_ratings'):
             return [IsAuthenticated()]
         return []
-        
+
     def get_queryset(self):
         queryset = Rating.objects.all()
         product_id = self.request.query_params.get('product', None)
@@ -143,6 +145,7 @@ class RatingsListView(generics.ListAPIView):
             else:
                 queryset = Rating.objects.none()  # Return empty queryset for unauthenticated users
         return queryset
+
 
 class RatingsDetailUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Rating.objects.all()
@@ -331,3 +334,72 @@ class PaymentAPI(APIView):
 
         except requests.RequestException as e:
             raise RuntimeError(f"E-Wallet payment request failed: {e}")
+
+
+class WishlistAddAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        product_id = request.data.get('product_id')
+        if not product_id:
+            return Response(
+                {"error": "Product ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            product = Products.objects.get(product_id=product_id)
+        except Products.DoesNotExist:
+            return Response(
+                {"error": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user_profile = self.request.user.profile
+        user_profile.wishlist.products.add(product)
+        user_profile.wishlist.save()
+        return Response(
+            {"message": "Product added to wishlist."},
+            status=status.HTTP_200_OK
+        )
+
+
+class WishlistRemoveAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        product_id = request.data.get('product_id')
+        if not product_id:
+            return Response(
+                {"error": "Product ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            product = Products.objects.get(product_id=product_id)
+        except Products.DoesNotExist:
+            return Response(
+                {"error": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user_profile = self.request.user.profile
+        user_profile.wishlist.products.remove(product)
+        user_profile.wishlist.save()
+        return Response(
+            {"message": "Product removed from wishlist."},
+            status=status.HTTP_200_OK
+        )
+
+
+class WishlistRetrieveAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user_profile = self.request.user.profile
+        wishlist = user_profile.wishlist.products.all()
+        serializer = ProductsSerializer(wishlist, many=True)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
