@@ -390,12 +390,18 @@ class WishlistRemoveAPI(APIView):
             )
 
         user_profile = self.request.user.profile
-        user_profile.wishlist.products.remove(product)
-        user_profile.wishlist.save()
-        return Response(
-            {"message": "Product removed from wishlist."},
-            status=status.HTTP_200_OK
-        )
+        if product not in user_profile.wishlist.products.all():
+            return Response(
+                {'message': 'Product not in wishlist.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
+            user_profile.wishlist.products.remove(product)
+            user_profile.wishlist.save()
+            return Response(
+                {"message": "Product removed from wishlist."},
+                status=status.HTTP_200_OK
+            )
 
 
 class WishlistRetrieveAPI(APIView):
