@@ -356,12 +356,18 @@ class WishlistAddAPI(APIView):
             )
 
         user_profile = self.request.user.profile
-        user_profile.wishlist.products.add(product)
-        user_profile.wishlist.save()
-        return Response(
-            {"message": "Product added to wishlist."},
-            status=status.HTTP_200_OK
-        )
+        if product in user_profile.wishlist.products.all():
+            return Response(
+                {'message': 'Product already in wishlist.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
+            user_profile.wishlist.products.add(product)
+            user_profile.wishlist.save()
+            return Response(
+                {"message": "Product added to wishlist."},
+                status=status.HTTP_200_OK
+            )
 
 
 class WishlistRemoveAPI(APIView):

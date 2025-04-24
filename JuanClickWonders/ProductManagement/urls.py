@@ -13,6 +13,9 @@ from ProductManagement.views import (
     RatingsListView,
     RatingsDetailUpdateDeleteView,
     PaymentAPI,
+    WishlistAddAPI,
+    WishlistRemoveAPI,
+    WishlistRetrieveAPI,
 )
 
 urlpatterns = [
@@ -46,5 +49,11 @@ urlpatterns = [
          CartItemListCreateApi.as_view(), name="cartitem-list"),
     path("cart/<int:cart_id>/items/<int:pk>/",
          CartItemRetrieveUpdateDestroyApi.as_view(), name="cartitem-detail"),
-    path("payment/", PaymentAPI.as_view(), name="payment")
+    path("payment/", PaymentAPI.as_view(), name="payment"),
+
+    path('wishlist/add/<int:product_id>/',
+         WishlistAddAPI.as_view(), name='wishlist_add'),
+    path('wishlist/remove/<int:product_id>/',
+         WishlistRemoveAPI.as_view(), name='wishlist_remove'),
+    path('wishlist/', WishlistRetrieveAPI.as_view(), name='wishlist_list'),
 ]
