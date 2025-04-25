@@ -212,7 +212,7 @@
                         <div v-for="(product, index) in paginatedProducts" :key="product.product_id"
                             class="group bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl"
                             :class="{'animate-fade-in-up-1': index % 4 === 0, 'animate-fade-in-up-2': index % 4 === 1, 'animate-fade-in-up-3': index % 4 === 2, 'animate-fade-in-up-4': index % 4 === 3}">
-                            <router-link :to="'/product/' + product.product_id">
+                            <router-link :to="'/product/' + product.product_id" @click="scrollToTop">
                                 <div class="relative overflow-hidden">
                                     <!-- Out of Stock Badge -->
                                     <div v-if="product.stock === 0" class="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold uppercase px-3 py-1 rounded-br-lg z-10">
@@ -262,7 +262,7 @@
                     <div v-if="products.length > 0" class="flex justify-center mt-8">
                         <div class="flex items-center space-x-1">
                             <button v-for="page in Math.min(totalPages, 5)" :key="page"
-                                @click="currentPage = page; window.scrollTo({ top: 0, behavior: 'smooth' })"
+                                @click="currentPage = page; scrollToTop()"
                                 class="w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-200 text-sm font-medium"
                                 :class="currentPage === page ? 'bg-yellow-500 text-gray-900' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'">
                                 {{ page }}
@@ -271,7 +271,7 @@
                             <span v-if="totalPages > 5" class="px-2 text-gray-600">...</span>
                             
                             <button v-if="totalPages > 5"
-                                @click="currentPage = totalPages; window.scrollTo({ top: 0, behavior: 'smooth' })"
+                                @click="currentPage = totalPages; scrollToTop()"
                                 class="w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-200 text-sm font-medium"
                                 :class="currentPage === totalPages ? 'bg-yellow-500 text-gray-900' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'">
                                 {{ totalPages }}
@@ -377,6 +377,11 @@ export default {
                 this.fetchProducts();
             }
         },
+        '$route': {
+            handler() {
+                this.scrollToTop();
+            }
+        },
         sortDropdownOpen(newVal) {
             if (newVal) {
                 const closeDropdown = (e) => {
@@ -453,18 +458,19 @@ export default {
                 console.error("Error fetching products:", error);
             } finally {
                 this.loading = false;
+                this.scrollToTop();
             }
         },
         nextPage() {
             if (this.currentPage < this.totalPages) {
                 this.currentPage++;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.scrollToTop();
             }
         },
         previousPage() {
             if (this.currentPage > 1) {
                 this.currentPage--;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.scrollToTop();
             }
         },
         updateSort(value) {
@@ -551,13 +557,18 @@ export default {
             if (!e.target.closest('.relative')) {
                 this.sortDropdownOpen = false;
             }
+        },
+        scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     },
     created() {
         this.fetchCategories();
+        this.scrollToTop();
     },
     mounted() {
         document.addEventListener('click', this.closeDropdown);
+        this.scrollToTop();
     },
     beforeUnmount() {
         document.removeEventListener('click', this.closeDropdown);

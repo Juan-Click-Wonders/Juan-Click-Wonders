@@ -5,7 +5,7 @@
         <!-- Header with Logo -->
         <div class="bg-gradient-to-r from-gray-900 to-gray-800 px-8 py-10 text-center">
           <img src="/icon.png" alt="Juan Click Wonders" class="h-20 w-20 mx-auto mb-2">
-          <h2 class="text-2xl font-bold text-white">Welcome Back!</h2>
+          <h2 class="text-2xl font-bold text-white">Log In</h2>
           <p class="text-gray-300 mt-2">Sign in to your account to continue</p>
         </div>
 

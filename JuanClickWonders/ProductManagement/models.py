@@ -59,6 +59,7 @@ class Cart(models.Model):
     )
     updated_at = models.DateTimeField(auto_now=True)
 
+
 class CartItem(models.Model):
     cart = models.ForeignKey(
         "Cart", on_delete=models.CASCADE, related_name="cart_items"
@@ -85,7 +86,6 @@ class Payment(models.Model):
     success = models.BooleanField(default=None)
     timestamp = models.DateTimeField(auto_now_add=True)
 
-
 class Order(models.Model):
     order_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
@@ -103,3 +103,14 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.order_id}"
+      
+class Wishlist(models.Model):
+    user = models.OneToOneField(
+        UserProfile, on_delete=models.CASCADE, related_name='wishlist'
+    )
+    products = models.ManyToManyField(
+        Products, related_name='wishlisted_by'
+    )
+
+    def __str__(self):
+        return f"{self.user}'s Wishlist"

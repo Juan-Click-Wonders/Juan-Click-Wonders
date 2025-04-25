@@ -9,9 +9,8 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from urllib.parse import quote
 
-from ProductManagement.models import Products, Category, Cart, CartItem, Payment, Rating, Order
+from ProductManagement.models import Products, Category, Cart, CartItem, Payment, Rating, Order, Wishlist
 from ProductManagement.serializers import ProductsSerializer, CategorySerializer, CartSerializer, CartItemSerializer, RatingSerializer, OrderSerializer
-
 
 class ProductListCreateApi(generics.ListCreateAPIView):
     serializer_class = ProductsSerializer
@@ -72,6 +71,7 @@ class CategoryDetailApi(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CategorySerializer
     lookup_field = "category_id"
 
+
 class RatingsCreateView(generics.CreateAPIView):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
@@ -83,10 +83,10 @@ class RatingsCreateView(generics.CreateAPIView):
         print("Request Data Type:", type(request.data))
         print("Request Data:", request.data)
         print("Request FILES:", request.FILES)
-        
+
         # Handle the file upload explicitly
         data = request.data.copy()
-        
+
         # Check if file exists in request.FILES
         if 'image_url' in request.FILES:
             print("Image found in request.FILES with key 'image_url'")
@@ -95,7 +95,7 @@ class RatingsCreateView(generics.CreateAPIView):
             print("Image found in request.FILES with key 'image'")
             # Rename 'image' to 'image_url' to match our model field
             data['image_url'] = request.FILES['image']
-        
+
         # Create a serializer with our modified data
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -107,7 +107,7 @@ class RatingsCreateView(generics.CreateAPIView):
         product_id = self.request.data.get('product')
         if Rating.objects.filter(user=self.request.user.profile, product_id=product_id).exists():
             raise PermissionDenied("You have already rated this product")
-            
+
         # Get the user's name from the profile or user object
         user_name = None
         if hasattr(self.request.user, 'first_name') and self.request.user.first_name:
@@ -116,22 +116,23 @@ class RatingsCreateView(generics.CreateAPIView):
             user_name = self.request.user.profile.first_name
         elif hasattr(self.request.user, 'username'):
             user_name = self.request.user.username
-        
+
         # If user_name was provided in the request, use it instead (for frontend compatibility)
         if 'user_name' in self.request.data:
             user_name = self.request.data.get('user_name')
-            
+
         serializer.save(user=self.request.user.profile, user_name=user_name)
+
 
 class RatingsListView(generics.ListAPIView):
     serializer_class = RatingSerializer
-    
+
     def get_permissions(self):
         # Allow anonymous users to view ratings, but require auth for user-specific queries
         if self.request.query_params.get('user_ratings'):
             return [IsAuthenticated()]
         return []
-        
+
     def get_queryset(self):
         queryset = Rating.objects.all()
         product_id = self.request.query_params.get('product', None)
@@ -143,6 +144,7 @@ class RatingsListView(generics.ListAPIView):
             else:
                 queryset = Rating.objects.none()  # Return empty queryset for unauthenticated users
         return queryset
+
 
 class RatingsDetailUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Rating.objects.all()
@@ -348,3 +350,142 @@ class UserOrdersApi(generics.ListAPIView):
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user.profile).order_by('-order_id')
+
+class WishlistAddAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        product_id = self.kwargs.get('product_id')
+        if not product_id:
+            return Response(
+                {"error": "Product ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            product = Products.objects.get(product_id=product_id)
+        except Products.DoesNotExist:
+            return Response(
+                {"error": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user_profile = self.request.user.profile
+        if product in user_profile.wishlist.products.all():
+            return Response(
+                {'message': 'Product already in wishlist.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
+            user_profile.wishlist.products.add(product)
+            user_profile.wishlist.save()
+            return Response(
+                {"message": "Product added to wishlist."},
+                status=status.HTTP_200_OK
+            )
+
+
+class WishlistRemoveAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        product_id = self.kwargs.get('product_id')
+        if not product_id:
+            return Response(
+                {"error": "Product ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            product = Products.objects.get(product_id=product_id)
+        except Products.DoesNotExist:
+            return Response(
+                {"error": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user_profile = self.request.user.profile
+        if product not in user_profile.wishlist.products.all():
+            return Response(
+                {'message': 'Product not in wishlist.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
+            user_profile.wishlist.products.remove(product)
+            user_profile.wishlist.save()
+            return Response(
+                {"message": "Product removed from wishlist."},
+                status=status.HTTP_200_OK
+            )
+
+
+class WishlistRetrieveAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user_profile = self.request.user.profile
+        
+        # Ensure the user has a wishlist
+        wishlist, created = Wishlist.objects.get_or_create(user=user_profile)
+        
+        products = wishlist.products.all()
+        
+        # Return a list of product IDs and their details
+        result = []
+        for product in products:
+            result.append({
+                "id": f"wishlist_{product.product_id}",  # Using a unique ID format for frontend
+                "product": product.product_id
+            })
+            
+        return Response(
+            result,
+            status=status.HTTP_200_OK
+        )
+
+
+class WishlistToggleAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        product_id = request.data.get('product')
+        if not product_id:
+            return Response(
+                {"detail": "Product ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            product = Products.objects.get(product_id=product_id)
+        except Products.DoesNotExist:
+            return Response(
+                {"detail": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user_profile = self.request.user.profile
+        
+        # Ensure the user has a wishlist
+        wishlist, created = Wishlist.objects.get_or_create(user=user_profile)
+        
+        # Check if product is already in wishlist
+        is_in_wishlist = product in wishlist.products.all()
+        
+        if is_in_wishlist:
+            # Remove product from wishlist
+            wishlist.products.remove(product)
+            action = "removed from"
+        else:
+            # Add product to wishlist
+            wishlist.products.add(product)
+            action = "added to"
+        
+        wishlist.save()
+        
+        return Response(
+            {
+                "message": f"Product {action} wishlist.",
+                "is_in_wishlist": not is_in_wishlist
+            },
+            status=status.HTTP_200_OK
+        )
