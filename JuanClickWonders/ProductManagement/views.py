@@ -9,7 +9,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from urllib.parse import quote
 
-from ProductManagement.models import Products, Category, Cart, CartItem, Payment, Rating
+from ProductManagement.models import Products, Category, Cart, CartItem, Payment, Rating, Wishlist
 from ProductManagement.serializers import ProductsSerializer, CategorySerializer, CartSerializer, CartItemSerializer, RatingSerializer
 
 
@@ -409,13 +409,68 @@ class WishlistRetrieveAPI(APIView):
 
     def get(self, request, *args, **kwargs):
         user_profile = self.request.user.profile
-        wishlist = user_profile.wishlist.products.all()
-        serializer = ProductsSerializer(
-            wishlist,
-            many=True,
-            context={'request': request}
-        )
+        
+        # Ensure the user has a wishlist
+        wishlist, created = Wishlist.objects.get_or_create(user=user_profile)
+        
+        products = wishlist.products.all()
+        
+        # Return a list of product IDs and their details
+        result = []
+        for product in products:
+            result.append({
+                "id": f"wishlist_{product.product_id}",  # Using a unique ID format for frontend
+                "product": product.product_id
+            })
+            
         return Response(
-            serializer.data,
+            result,
+            status=status.HTTP_200_OK
+        )
+
+
+class WishlistToggleAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        product_id = request.data.get('product')
+        if not product_id:
+            return Response(
+                {"detail": "Product ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            product = Products.objects.get(product_id=product_id)
+        except Products.DoesNotExist:
+            return Response(
+                {"detail": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user_profile = self.request.user.profile
+        
+        # Ensure the user has a wishlist
+        wishlist, created = Wishlist.objects.get_or_create(user=user_profile)
+        
+        # Check if product is already in wishlist
+        is_in_wishlist = product in wishlist.products.all()
+        
+        if is_in_wishlist:
+            # Remove product from wishlist
+            wishlist.products.remove(product)
+            action = "removed from"
+        else:
+            # Add product to wishlist
+            wishlist.products.add(product)
+            action = "added to"
+        
+        wishlist.save()
+        
+        return Response(
+            {
+                "message": f"Product {action} wishlist.",
+                "is_in_wishlist": not is_in_wishlist
+            },
             status=status.HTTP_200_OK
         )

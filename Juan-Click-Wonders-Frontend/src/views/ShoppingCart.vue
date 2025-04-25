@@ -408,11 +408,11 @@ export default {
                     const results = await Promise.all(productPromises);
                     this.cartItems = results.filter(item => item !== null);
 
-                    // Calculate total number of items (sum of quantities)
-                    const totalQuantity = this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
+                    // Count unique items instead of total quantity
+                    const uniqueItemCount = this.cartItems.length;
 
-                    // Set cart count to total quantity of all items
-                    localStorage.setItem('cartCount', totalQuantity.toString());
+                    // Set cart count to number of unique items
+                    localStorage.setItem('cartCount', uniqueItemCount.toString());
                     window.dispatchEvent(new Event('cart-updated'));
 
                     if (this.unavailableItems.length > 0) {
@@ -467,9 +467,8 @@ export default {
                 // Update the item's quantity locally
                 itemToUpdate.quantity = newQuantity;
 
-                // Update cart count in localStorage to reflect the total quantities
-                const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', (currentCount + quantityDifference).toString());
+                // No need to update cartCount here since the number of unique items hasn't changed
+                // The count only changes when an item is added or removed completely
 
                 // Emit cart-updated event to update the navbar
                 window.dispatchEvent(new Event('cart-updated'));
@@ -498,9 +497,9 @@ export default {
                 // Remove item from cart items array
                 this.cartItems = this.cartItems.filter(item => item.id !== itemId);
 
-                // Update cart count - decrease by the full quantity of the removed item
+                // Update cart count - decrease by 1 for the removed unique item
                 const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', Math.max(0, currentCount - quantityToRemove).toString());
+                localStorage.setItem('cartCount', Math.max(0, currentCount - 1).toString());
 
                 window.dispatchEvent(new Event('cart-updated'));
 
