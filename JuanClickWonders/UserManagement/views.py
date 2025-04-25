@@ -21,6 +21,7 @@ from .serializers import (
     UpdateProfileSerializer, UpdatePasswordSerializer, ForgotPasswordSerializer,
     ResetPasswordSerializer,
 )
+from ProductManagement.models import Wishlist
 
 User = get_user_model()
 
@@ -28,6 +29,12 @@ User = get_user_model()
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        # Create a wishlist for the new user
+        if hasattr(user, 'profile'):
+            Wishlist.objects.create(user=user.profile)
 
 
 class LoginView(TokenObtainPairView):

@@ -72,6 +72,9 @@
                                 <router-link to="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     Your Orders
                                 </router-link>
+                                <router-link to="/wishlist" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Your Wishlist
+                                </router-link>
                                 <div class="border-t border-gray-200"></div>
                                 <a href="#" @click.prevent="logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
                                     Logout
@@ -153,6 +156,9 @@
                             </router-link>
                             <router-link v-if="authState" to="/orders" @click="showMobileMenu = false" class="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors">
                                 YOUR ORDERS
+                            </router-link>
+                            <router-link v-if="authState" to="/wishlist" @click="showMobileMenu = false" class="block px-3 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                                WISHLIST
                             </router-link>
                             <a v-if="authState" href="#" @click.prevent="logout" class="block px-3 py-2 rounded-md text-red-400 hover:bg-gray-700 transition-colors">
                                 LOGOUT

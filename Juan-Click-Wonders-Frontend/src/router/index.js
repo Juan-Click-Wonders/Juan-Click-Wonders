@@ -68,6 +68,11 @@ const routes =[
       name: 'orders',
       component: () => import('../views/OrderManagement.vue'),
     },
+    {
+      path: '/wishlist',
+      name: 'wishlist',
+      component: () => import('../views/WishlistView.vue'),
+    },
   ];
 
 const router = createRouter({
