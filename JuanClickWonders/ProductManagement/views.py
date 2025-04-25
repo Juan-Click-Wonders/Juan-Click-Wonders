@@ -294,6 +294,9 @@ class PaymentAPI(APIView):
                     user=self.request.user.profile,
                     status='P'
                 )
+                item.product.stock -= item.quantity
+                item.product.sold_products += item.quantity
+                item.product.save()
             cart_items.delete()
             return Response({
                 "message": f"Payment is now being processed via {method}.",
