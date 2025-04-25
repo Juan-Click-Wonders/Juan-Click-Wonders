@@ -2,12 +2,10 @@
     <div class="p-6 font-sans max-w-screen-xl mx-auto">
         <h1 class="text-2xl font-bold mb-6">Order Management</h1>
 
-        <!-- Loading State -->
         <div v-if="isLoading" class="flex justify-center items-center py-12">
             <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-600"></div>
         </div>
 
-        <!-- Error Message -->
         <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
             <p>{{ error }}</p>
             <button @click="fetchOrders" class="mt-2 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">
@@ -15,7 +13,6 @@
             </button>
         </div>
 
-        <!-- No Orders -->
         <div v-else-if="orders.length === 0" class="bg-white rounded-lg shadow p-8 text-center">
             <p class="text-gray-600 mb-4">You don't have any orders yet.</p>
             <router-link to="/product_list" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
@@ -26,7 +23,6 @@
             </router-link>
         </div>
 
-        <!-- Orders Table -->
         <div v-else class="bg-white rounded-lg shadow overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full whitespace-nowrap">
