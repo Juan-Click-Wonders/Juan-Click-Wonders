@@ -122,8 +122,6 @@ export default {
                     this.cartItems = [];
                     this.unavailableItems = [];
 
-                    let totalItems = 0;
-
                     for (const item of this.cart.cart_items) {
                         try {
                             const productResponse = await api.get(`/products/${item.product}`);
@@ -137,14 +135,13 @@ export default {
                                     Inventory_Level: productResponse.data.stock
                                 }
                             });
-                            totalItems += item.quantity;
                         } catch (error) {
                             console.error(`Error fetching product ${item.product}:`, error);
                             this.unavailableItems.push(item.id);
                         }
                     }
 
-                    localStorage.setItem('cartCount', totalItems);
+                    localStorage.setItem('cartCount', this.cartItems.length.toString());
                     window.dispatchEvent(new Event('cart-updated'));
 
                     if (this.unavailableItems.length > 0) {
@@ -193,8 +190,6 @@ export default {
 
                 this.cartItems[itemIndex].quantity = newQuantity;
 
-                const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', Math.max(0, currentCount + quantityDifference));
                 window.dispatchEvent(new Event('cart-updated'));
             } catch (error) {
                 console.error('Error updating quantity:', error);
@@ -212,7 +207,7 @@ export default {
                 this.cartItems.splice(itemIndex, 1);
 
                 const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', Math.max(0, currentCount - itemToRemove.quantity));
+                localStorage.setItem('cartCount', Math.max(0, currentCount - 1).toString());
 
                 window.dispatchEvent(new Event('cart-updated'));
 

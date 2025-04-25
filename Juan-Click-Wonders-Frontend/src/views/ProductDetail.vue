@@ -968,10 +968,13 @@ export default {
                     quantity: this.quantity
                 });
 
-                // Update total item count
-                const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', (currentCount + quantityToAdd).toString());
-                window.dispatchEvent(new Event('cart-updated'));
+                // Update cart count for unique items
+                if (!existingItem) {
+                    // This is a new unique item, increment the count by 1
+                    const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
+                    localStorage.setItem('cartCount', (currentCount + 1).toString());
+                    window.dispatchEvent(new Event('cart-updated'));
+                }
 
                 // Redirect to cart page
                 this.$router.push('/cart');
