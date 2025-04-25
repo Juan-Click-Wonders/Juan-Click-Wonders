@@ -13,6 +13,9 @@ from ProductManagement.views import (
     RatingsListView,
     RatingsDetailUpdateDeleteView,
     PaymentAPI,
+    WishlistAddAPI,
+    WishlistRemoveAPI,
+    WishlistRetrieveAPI,
 )
 
 urlpatterns = [
@@ -28,18 +31,17 @@ urlpatterns = [
          ProductStockStatusApi.as_view(), name="product_stock_status"),
     path("category/", CategoryListCreateApi.as_view(), name="category_list"),
     path('category/create/', CategoryListCreateApi.as_view(), name='category_create'),
-    path("category/<int:category_id>", CategoryDetailApi.as_view(), name="category_detail"),
-    path('category/update/<int:category_id>/', CategoryDetailApi.as_view(), name='category-detail-update-delete'),
-    
-  
-    path('ratings/', RatingsListView.as_view(), name='ratings-list'),
-    path('ratings/create/', RatingsCreateView.as_view(), name='ratings-create'),
-    path('ratings/<int:pk>/', RatingsDetailUpdateDeleteView.as_view(), name='ratings-detail-update-delete'),
-    
     path("category/<int:category_id>",
          CategoryDetailApi.as_view(), name="category_detail"),
     path('category/update/<int:category_id>/',
          CategoryDetailApi.as_view(), name='category-detail-update-delete'),
+
+
+    path('ratings/', RatingsListView.as_view(), name='ratings-list'),
+    path('ratings/create/', RatingsCreateView.as_view(), name='ratings-create'),
+    path('ratings/<int:pk>/', RatingsDetailUpdateDeleteView.as_view(),
+         name='ratings-detail-update-delete'),
+
 
     path("cart/", CartListCreateApi.as_view(), name="cart-list"),
     path("cart/<int:pk>/", CartRetrieveUpdateDestroyApi.as_view(), name="cart-detail"),
@@ -47,5 +49,11 @@ urlpatterns = [
          CartItemListCreateApi.as_view(), name="cartitem-list"),
     path("cart/<int:cart_id>/items/<int:pk>/",
          CartItemRetrieveUpdateDestroyApi.as_view(), name="cartitem-detail"),
-    path("payment/", PaymentAPI.as_view(), name="payment")
+    path("payment/", PaymentAPI.as_view(), name="payment"),
+
+    path('wishlist/add/<int:product_id>/',
+         WishlistAddAPI.as_view(), name='wishlist_add'),
+    path('wishlist/remove/<int:product_id>/',
+         WishlistRemoveAPI.as_view(), name='wishlist_remove'),
+    path('wishlist/', WishlistRetrieveAPI.as_view(), name='wishlist_list'),
 ]
