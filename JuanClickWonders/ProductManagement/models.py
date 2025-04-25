@@ -86,7 +86,24 @@ class Payment(models.Model):
     success = models.BooleanField(default=None)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+class Order(models.Model):
+    order_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        UserProfile, on_delete=models.CASCADE, related_name="orders"
+    )
+    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    ORDER_STATUSES = [
+        ('P', 'Paid'),
+        ('S', 'To Ship'),
+        ('R', 'To Receive'),
+        ('D', 'Delivered'),
+    ]
+    status = models.CharField(max_length=1, choices=ORDER_STATUSES, default='P')
 
+    def __str__(self):
+        return f"Order {self.order_id}"
+      
 class Wishlist(models.Model):
     user = models.OneToOneField(
         UserProfile, on_delete=models.CASCADE, related_name='wishlist'

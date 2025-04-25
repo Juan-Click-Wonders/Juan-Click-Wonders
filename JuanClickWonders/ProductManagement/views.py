@@ -9,9 +9,8 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from urllib.parse import quote
 
-from ProductManagement.models import Products, Category, Cart, CartItem, Payment, Rating, Wishlist
-from ProductManagement.serializers import ProductsSerializer, CategorySerializer, CartSerializer, CartItemSerializer, RatingSerializer
-
+from ProductManagement.models import Products, Category, Cart, CartItem, Payment, Rating, Order, Wishlist
+from ProductManagement.serializers import ProductsSerializer, CategorySerializer, CartSerializer, CartItemSerializer, RatingSerializer, OrderSerializer
 
 class ProductListCreateApi(generics.ListCreateAPIView):
     serializer_class = ProductsSerializer
@@ -290,6 +289,16 @@ class PaymentAPI(APIView):
         )
 
         if payment_successful:
+            for item in cart_items:
+                Order.objects.create(
+                    product=item.product,
+                    quantity=item.quantity,
+                    user=self.request.user.profile,
+                    status='P'
+                )
+                item.product.stock -= item.quantity
+                item.product.sold_products += item.quantity
+                item.product.save()
             cart_items.delete()
             return Response({
                 "message": f"Payment is now being processed via {method}.",
@@ -335,6 +344,12 @@ class PaymentAPI(APIView):
         except requests.RequestException as e:
             raise RuntimeError(f"E-Wallet payment request failed: {e}")
 
+
+class UserOrdersApi(generics.ListAPIView):
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user.profile).order_by('-order_id')
 
 class WishlistAddAPI(APIView):
     permission_classes = [IsAuthenticated]

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ProductManagement.models import Products, Category, Cart, CartItem, Rating
+from ProductManagement.models import Products, Category, Cart, CartItem, Rating, Order
 
 
 class ProductsSerializer(serializers.ModelSerializer):
@@ -127,5 +127,23 @@ class RatingSerializer(serializers.ModelSerializer):
                 ret['user_name'] = getattr(user, 'username', 'User')
         
         return ret
+    
 
+class OrderSerializer(serializers.ModelSerializer):
+    product = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
+    class Meta:
+        model = Order
+        fields = ['order_id', 'product', 'quantity', 'status', 'user']
+
+    def get_product(self, obj):
+        if obj.product:
+            return {
+                "name": obj.product.name,
+                "price": obj.product.price
+            }
+        return None
+    
+    def get_status(self, obj):
+        return obj.get_status_display()
