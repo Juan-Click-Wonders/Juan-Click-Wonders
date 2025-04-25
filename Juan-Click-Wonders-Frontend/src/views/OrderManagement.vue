@@ -1,11 +1,36 @@
 <template>
     <div class="p-6 font-sans max-w-screen-xl mx-auto">
         <h1 class="text-2xl font-bold mb-6">Order Management</h1>
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+
+        <div v-if="isLoading" class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-600"></div>
+        </div>
+
+        <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <p>{{ error }}</p>
+            <button @click="fetchOrders" class="mt-2 bg-red-600 hover:bg-red-700 text-white py-1 px-3 rounded">
+                Try Again
+            </button>
+        </div>
+
+        <div v-else-if="orders.length === 0" class="bg-white rounded-lg shadow p-8 text-center">
+            <p class="text-gray-600 mb-4">You don't have any orders yet.</p>
+            <router-link to="/product_list" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                Start Shopping
+            </router-link>
+        </div>
+
+        <div v-else class="bg-white rounded-lg shadow overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full whitespace-nowrap">
                     <thead>
                         <tr class="bg-gray-100 text-center">
+                            <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Order ID
+                            </th>
                             <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                 Product
                             </th>
@@ -24,17 +49,17 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
-                        <!-- Product Row -->
-                        <tr class="hover:bg-gray-50 transition-colors text-center">
+                        <tr v-for="order in orders" :key="order.order_id" class="hover:bg-gray-50 transition-colors text-center">
+                            <td class="px-6 py-4">#{{ order.order_id }}</td>
                             <td class="px-6 py-4 whitespace-normal break-words max-w-[200px] text-left">
-                                Placeholder GeForce RTX 3080
+                                {{ order.product.name }}
                             </td>
-                            <td class="px-6 py-4">₱70,000.00</td>
-                            <td class="px-6 py-4">1</td>
-                            <td class="px-6 py-4 font-semibold">₱70,000.00</td>
+                            <td class="px-6 py-4">₱{{ formatPrice(order.product.price) }}</td>
+                            <td class="px-6 py-4">{{ order.quantity }}</td>
+                            <td class="px-6 py-4 font-semibold">₱{{ formatPrice(order.product.price * order.quantity) }}</td>
                             <td class="px-6 py-4">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 min-w-15 justify-center">
-                                    Paid
+                                <span :class="getStatusClass(order.status)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full min-w-15 justify-center">
+                                    {{ order.status }}
                                 </span>
                             </td>
                         </tr>
@@ -58,32 +83,14 @@ const api = axios.create({
 });
 
 export default {
-    name: 'ShoppingCart',
+    name: 'OrderManagement',
     data() {
         return {
-            cartItems: [],
-            cart: null,
-            message: null,
-            messageType: 'info',
-            unavailableItems: [],
-            userAddress: 'Loading...',
+            orders: [],
+            isLoading: true,
             isAuthenticated: false,
-            selectedPayment: "",
-            paymentError: ""
+            error: null
         };
-    },
-    computed: {
-        subtotal() {
-            return this.cartItems.reduce((sum, item) => {
-                return sum + (item.product.Price * item.quantity);
-            }, 0);
-        },
-        shippingFee() {
-            return 1000;
-        },
-        total() {
-            return this.subtotal + this.shippingFee;
-        }
     },
     methods: {
         async checkAuth() {
@@ -93,175 +100,65 @@ export default {
                 return true;
             } catch (error) {
                 this.isAuthenticated = false;
-                localStorage.removeItem('cartCount');
                 this.$router.push('/auth/login');
                 return false;
             }
         },
-        async fetchUserProfile() {
+        async fetchOrders() {
             if (!this.isAuthenticated) return;
+
+            this.isLoading = true;
+            this.error = null;
+
             try {
-                const response = await api.get('/api/profile/');
-                this.userAddress = response.data.address;
+                const response = await api.get('/orders/');
+                this.orders = response.data;
+                console.log('Orders fetched:', this.orders);
             } catch (error) {
-                console.error('Error fetching user profile:', error);
-                this.userAddress = 'Address not available';
-                if (error.response && error.response.status === 401) {
-                    this.isAuthenticated = false;
-                    localStorage.removeItem('cartCount');
-                    this.$router.push('/auth/login');
-                }
-            }
-        },
-        async fetchCart() {
-            if (!this.isAuthenticated) return;
-            try {
-                const cartResponse = await api.get('/cart/');
-                if (cartResponse.data && cartResponse.data.length > 0) {
-                    this.cart = cartResponse.data[0];
-                    this.cartItems = [];
-                    this.unavailableItems = [];
+                console.error('Error fetching orders:', error);
 
-                    for (const item of this.cart.cart_items) {
-                        try {
-                            const productResponse = await api.get(`/products/${item.product}`);
-                            this.cartItems.push({
-                                id: item.id,
-                                quantity: item.quantity,
-                                product: {
-                                    Name: productResponse.data.name,
-                                    Price: productResponse.data.price,
-                                    Image: productResponse.data.image_url,
-                                    Inventory_Level: productResponse.data.stock
-                                }
-                            });
-                        } catch (error) {
-                            console.error(`Error fetching product ${item.product}:`, error);
-                            this.unavailableItems.push(item.id);
-                        }
-                    }
-
-                    localStorage.setItem('cartCount', this.cartItems.length.toString());
-                    window.dispatchEvent(new Event('cart-updated'));
-
-                    if (this.unavailableItems.length > 0) {
-                        this.message = `${this.unavailableItems.length} item${this.unavailableItems.length > 1 ? 's' : ''} in your cart ${this.unavailableItems.length > 1 ? 'are' : 'is'} no longer available. Please remove them to proceed with checkout.`;
-                        this.messageType = 'error';
+                if (error.response) {
+                    console.log('Error response:', error.response);
+                    if (error.response.status === 401) {
+                        this.isAuthenticated = false;
+                        this.$router.push('/auth/login');
+                    } else if (error.response.status === 500) {
+                        this.error = 'Server error. The order system might be experiencing issues.';
                     } else {
-                        this.message = null;
+                        this.error = `Error (${error.response.status}): ${error.response.data.detail || 'There was an error loading your orders.'}`;
                     }
                 } else {
-                    this.cartItems = [];
-                    this.cart = null;
-                    this.message = null;
-                    localStorage.setItem('cartCount', '0');
-                    window.dispatchEvent(new Event('cart-updated'));
+                    this.error = 'There was an error connecting to the server. Please try again.';
                 }
-            } catch (error) {
-                console.error('Error fetching cart:', error);
-                this.cartItems = [];
-                this.cart = null;
-                this.message = 'There was an error loading your cart. Please try again.';
-                this.messageType = 'error';
-                if (error.response && error.response.status === 401) {
-                    this.isAuthenticated = false;
-                    localStorage.removeItem('cartCount');
-                    this.$router.push('/auth/login');
-                }
+            } finally {
+                this.isLoading = false;
             }
         },
-        async updateQuantity(itemId, newQuantity) {
-            try {
-                const itemIndex = this.cartItems.findIndex(item => item.id === itemId);
-                if (itemIndex === -1) return;
-
-                const itemToUpdate = this.cartItems[itemIndex];
-
-                if (newQuantity === 0) {
-                    await this.removeFromCart(itemId);
-                    return;
-                }
-
-                const quantityDifference = newQuantity - itemToUpdate.quantity;
-
-                await api.patch(`/cart/${this.cart.cart_id}/items/${itemId}/`, {
-                    quantity: newQuantity
-                });
-
-                this.cartItems[itemIndex].quantity = newQuantity;
-
-                window.dispatchEvent(new Event('cart-updated'));
-            } catch (error) {
-                console.error('Error updating quantity:', error);
-            }
-        },
-        async removeFromCart(itemId) {
-            try {
-                const itemIndex = this.cartItems.findIndex(item => item.id === itemId);
-                if (itemIndex === -1) return;
-
-                const itemToRemove = this.cartItems[itemIndex];
-
-                await api.delete(`/cart/${this.cart.cart_id}/items/${itemId}/`);
-
-                this.cartItems.splice(itemIndex, 1);
-
-                const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', Math.max(0, currentCount - 1).toString());
-
-                window.dispatchEvent(new Event('cart-updated'));
-
-                if (this.cartItems.length === 0) {
-                    this.cart = null;
-                    localStorage.setItem('cartCount', '0');
-                }
-            } catch (error) {
-                console.error('Error removing item:', error);
-            }
-        },
-        async handleCheckout() {
-        if (!this.selectedPayment) {
-            this.paymentError = "Please select a payment method.";
-            return;
-        }
-
-        this.paymentError = "";
-
-        try {
-            const response = await axios.post("http://127.0.0.1:8000/payment/", {
-                method: this.selectedPayment
-            }, {
-                withCredentials: true,
-                headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-                }
+        formatPrice(price) {
+            return price.toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
             });
-            if (response.status === 200) {
-                window.location.href = response.data.action_url;
-            }
-        } catch (error) {
-            if (error.response && error.response.status === 400) {
-                const errorMessage = error.response.data?.detail;
-                this.paymentError = errorMessage;
-            } else {
-                console.error("Payment failed:", error);
-                this.paymentError = "Payment Failed. Please try again.";
-                return;
+        },
+        getStatusClass(status) {
+            switch(status) {
+                case 'Paid':
+                    return 'bg-green-100 text-green-800';
+                case 'To Ship':
+                    return 'bg-blue-100 text-blue-800';
+                case 'To Receive':
+                    return 'bg-yellow-100 text-yellow-800';
+                case 'Delivered':
+                    return 'bg-purple-100 text-purple-800';
+                default:
+                    return 'bg-gray-100 text-gray-800';
             }
         }
-    }
     },
     async created() {
         const isAuth = await this.checkAuth();
         if (isAuth) {
-            await this.fetchCart();
-            await this.fetchUserProfile();
-        }
-    },
-    beforeUnmount() {
-        if (!this.isAuthenticated) {
-            localStorage.removeItem('cartCount');
+            await this.fetchOrders();
         }
     }
 };
