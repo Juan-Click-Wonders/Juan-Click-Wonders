@@ -40,6 +40,21 @@
             <!-- Product Content -->
             <div class="container mx-auto px-4 py-8">
                 <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <!-- Wishlist Notification Message -->
+                    <div v-if="wishlistMessage" 
+                         :class="[
+                            'p-3 m-3 rounded-lg flex items-center text-sm',
+                            wishlistMessageType === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 
+                            'bg-green-50 text-green-700 border border-green-200'
+                         ]">
+                        <svg v-if="wishlistMessageType === 'error'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {{ wishlistMessage }}
+                    </div>
                     <div class="flex flex-col lg:flex-row">
                         <!-- Product Image -->
                         <div class="lg:w-1/2 p-8 bg-white">
@@ -143,6 +158,24 @@
                                             <span>{{ product.stock === 0 ? 'Out of Stock' : 'Add to Cart' }}</span>
                                         </button>
                                     </div>
+                                    <div class="mt-3">
+                                        <button @click="toggleWishlist" 
+                                            class="w-full flex items-center justify-center space-x-2 py-3 px-4 border border-gray-300 rounded-lg transition-colors"
+                                            :class="{'text-red-600 border-red-200 bg-red-50': isInWishlist, 'hover:bg-gray-50': !isInWishlist}"
+                                            :disabled="!isLoggedIn || addingToWishlist">
+                                            <svg v-if="isInWishlist" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                                            </svg>
+                                            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                            </svg>
+                                            <span v-if="!addingToWishlist">{{ isInWishlist ? 'Added to Wishlist' : 'Add to Wishlist' }}</span>
+                                            <span v-else class="flex items-center space-x-1">
+                                                <div class="animate-spin h-4 w-4 border-b-2 rounded-full mr-2" :class="isInWishlist ? 'border-red-600' : 'border-gray-600'"></div>
+                                                <span>{{ isInWishlist ? 'Removing...' : 'Adding...' }}</span>
+                                            </span>
+                                        </button>
+                                    </div>
                                     <p v-if="!isLoggedIn" class="text-center text-sm text-gray-600 mt-3">
                                         <router-link to="/auth/login/" class="bg-black text-white px-3 py-1 rounded-lg font-medium hover:bg-gray-800 transition-colors inline-flex items-center text-sm text-white">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -175,7 +208,7 @@
                                         <span class="text-lg text-gray-500 ml-1">/ 5</span>
                                     </div>
                                     <div class="flex items-center">
-                                        <template v-for="i in 5" :key="i">
+                                        <div v-for="i in 5" :key="i" class="inline-block">
                                             <svg xmlns="http://www.w3.org/2000/svg" 
                                                 :class="[i <= Math.round(averageRating) ? 'text-yellow-500' : 'text-gray-300']"
                                                 class="h-5 w-5 fill-current" 
@@ -183,7 +216,7 @@
                                                 fill="currentColor">
                                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                             </svg>
-                                        </template>
+                                        </div>
                                     </div>
                                     <p class="text-sm text-gray-600 mt-1">{{ ratings.length }} {{ ratings.length === 1 ? 'review' : 'reviews' }}</p>
                                 </div>
@@ -213,7 +246,7 @@
                                     <div>
                                         <label class="block text-gray-700 mb-2">Rating</label>
                                         <div class="flex">
-                                            <template v-for="i in 5" :key="i">
+                                            <div v-for="i in 5" :key="i" class="inline-block">
                                                 <button 
                                                     @click="newRating.rating = i" 
                                                     class="focus:outline-none"
@@ -222,7 +255,7 @@
                                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                                     </svg>
                                                 </button>
-                                            </template>
+                                            </div>
                                         </div>
                                     </div>
                                     <div>
@@ -289,74 +322,6 @@
                                         </span>
                                     </button>
                                 </div>
-                            </div>
-                            
-                            <div v-else-if="isLoggedIn && hasUserRated" class="p-6 border-b border-gray-200 bg-gray-50">
-                                <p class="text-gray-700">You have already reviewed this product. Thank you for your feedback!</p>
-                            </div>
-                            
-                            <div v-else-if="!isLoggedIn" class="p-6 border-b border-gray-200 bg-gray-50">
-                                <p class="text-gray-700">
-                                    Please <router-link to="/auth/login" class="bg-black text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors inline-flex items-center text-white">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                        </svg>
-                                        Log in
-                                    </router-link> to leave a review.
-                                </p>
-                            </div>
-                            
-                            <!-- Reviews List -->
-                            <div v-if="ratings.length > 0">
-                                <div v-for="(rating, index) in ratings" :key="rating.id" 
-                                    class="p-6" 
-                                    :class="{'border-b border-gray-200': index < ratings.length - 1}">
-                                    <div class="flex items-start">
-                                        <div class="mr-4">
-                                            <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
-                                                {{ (rating.user_name && rating.user_name.charAt(0)) || 
-                                                   (typeof rating.user === 'string' ? rating.user.charAt(0) : 'U') }}
-                                            </div>
-                                        </div>
-                                        <div class="flex-1">
-                                            <!-- User and rating stars -->
-                                            <div class="flex flex-wrap items-center gap-2 mb-1">
-                                                <span class="font-medium text-gray-800">{{ rating.user_name || rating.first_name || rating.username || 'User' }}</span>
-                                                <div class="flex">
-                                                    <template v-for="i in 5" :key="i">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" 
-                                                            :class="[i <= rating.rating ? 'text-yellow-500' : 'text-gray-300']"
-                                                            class="h-4 w-4 fill-current" 
-                                                            viewBox="0 0 20 20" 
-                                                            fill="currentColor">
-                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                        </svg>
-                                                    </template>
-                                                </div>
-                                            </div>
-
-                                            <!-- Date -->
-                                            <div class="text-sm text-gray-500 mb-2">{{ formatDate(rating.created_at) }}</div>
-                                            
-                                            <!-- Review content -->
-                                            <p class="text-gray-700 whitespace-pre-line mb-3">{{ rating.description }}</p>
-                                            
-                                            <!-- Review image if any -->
-                                            <div v-if="rating.image_url" class="mt-2">
-                                                <img 
-                                                    :src="getRatingImageUrl(rating.image_url)" 
-                                                    alt="Review image" 
-                                                    class="h-24 w-auto rounded-md border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity" 
-                                                    @click="openImageModal(rating.image_url)"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div v-else class="p-6 text-center">
-                                <p class="text-gray-600">No reviews yet. Be the first to review this product!</p>
                             </div>
                         </div>
                     </div>
@@ -447,7 +412,11 @@ export default {
             userHasRatedProduct: false,  // Flag set by fetchRatings when user has already rated
             showImageModal: false,       // Controls the modal visibility
             modalImageUrl: null,         // URL of the image to display in the modal
-            isPreviewImage: false        // Flag to differentiate between preview images and review images
+            isPreviewImage: false,       // Flag to differentiate between preview images and review images
+            isInWishlist: false,         // Flag to track if the product is in the wishlist
+            addingToWishlist: false,     // Flag to track if the product is being added to the wishlist
+            wishlistMessage: null,       // Message for wishlist actions
+            wishlistMessageType: 'success' // Message type (success, error)
         };
     },
     computed: {
@@ -501,6 +470,12 @@ export default {
         formatDate(dateString) {
             return new Date(dateString).toLocaleDateString();
         },
+        scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        },
         async fetchCategories() {
             try {
                 const response = await api.get("/category");
@@ -518,6 +493,19 @@ export default {
                 this.newRating.product = this.product.product_id;
                 this.loading = false;
                 this.fetchRatings();
+                
+                // Check if product is in wishlist
+                if (this.isLoggedIn) {
+                    try {
+                        const wishlistResponse = await api.get('/wishlist/');
+                        if (wishlistResponse.data && wishlistResponse.data.length > 0) {
+                            // Check if this product is in the wishlist
+                            this.isInWishlist = wishlistResponse.data.some(item => item.product === this.product.product_id);
+                        }
+                    } catch (wishlistError) {
+                        console.error("Could not fetch wishlist status:", wishlistError);
+                    }
+                }
             } catch (error) {
                 console.error("Error fetching product:", error);
                 this.loading = false;
@@ -1017,11 +1005,82 @@ export default {
             this.isPreviewImage = true;
             this.showImageModal = true;
             document.body.style.overflow = 'hidden';
+        },
+        async toggleWishlist() {
+            if (!this.isLoggedIn) {
+                this.$router.push('/auth/login/');
+                return;
+            }
+
+            try {
+                this.addingToWishlist = true;
+                
+                // Get current product ID
+                const productId = this.product.product_id;
+                
+                // Check current state to determine the message
+                const wasInWishlist = this.isInWishlist;
+                
+                // Call the API to toggle wishlist status
+                const response = await api.post('/wishlist/toggle/', {
+                    product: productId
+                });
+                
+                // Update wishlist status based on response
+                this.isInWishlist = response.data.is_in_wishlist;
+                
+                // Show appropriate success message
+                if (this.isInWishlist) {
+                    // Product was added to wishlist
+                    this.wishlistMessage = 'Product added to wishlist successfully!';
+                    this.wishlistMessageType = 'success';
+                } else if (wasInWishlist) {
+                    // Product was removed from wishlist
+                    this.wishlistMessage = 'Product removed from wishlist';
+                    this.wishlistMessageType = 'success';
+                }
+                
+                // Clear message after 3 seconds
+                setTimeout(() => {
+                    this.wishlistMessage = null;
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error toggling wishlist:', error);
+                
+                // Show error message based on the response
+                this.wishlistMessageType = 'error';
+                
+                if (error.response) {
+                    if (error.response.status === 401) {
+                        this.wishlistMessage = 'Please login to add items to your wishlist';
+                        this.$router.push('/auth/login/');
+                    } else {
+                        this.wishlistMessage = 'Error updating wishlist: ' + (error.response.data.detail || 'Please try again');
+                    }
+                } else {
+                    this.wishlistMessage = 'Could not update wishlist. Please try again later.';
+                }
+                
+                // Clear error message after 3 seconds
+                setTimeout(() => {
+                    this.wishlistMessage = null;
+                }, 3000);
+            } finally {
+                this.addingToWishlist = false;
+            }
         }
     },
     created() {
         this.fetchCategories();
         this.fetchProduct();
+        this.scrollToTop();
+    },
+    updated() {
+        // This will ensure that when the component updates, the scroll position is reset
+        if (this.product && !this.loading) {
+            this.scrollToTop();
+        }
     },
     watch: {
         // Reset and refetch when the route changes (for navigating between products)
@@ -1029,6 +1088,7 @@ export default {
             this.quantity = 1;
             this.product = null;
             this.fetchProduct();
+            this.scrollToTop();
         }
     }
 };

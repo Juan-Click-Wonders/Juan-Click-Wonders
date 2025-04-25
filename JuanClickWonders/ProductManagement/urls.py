@@ -16,6 +16,7 @@ from ProductManagement.views import (
     WishlistAddAPI,
     WishlistRemoveAPI,
     WishlistRetrieveAPI,
+    WishlistToggleAPI,
 )
 
 urlpatterns = [
@@ -56,4 +57,5 @@ urlpatterns = [
     path('wishlist/remove/<int:product_id>/',
          WishlistRemoveAPI.as_view(), name='wishlist_remove'),
     path('wishlist/', WishlistRetrieveAPI.as_view(), name='wishlist_list'),
+    path('wishlist/toggle/', WishlistToggleAPI.as_view(), name='wishlist_toggle'),
 ]
