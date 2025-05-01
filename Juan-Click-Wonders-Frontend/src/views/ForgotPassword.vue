@@ -77,7 +77,7 @@
           <div class="mt-8 text-center">
             <p class="text-sm text-gray-600">
               Don't have an account? 
-              <router-link to="/auth/register" class="font-medium text-black hover:underline transition">
+              <router-link to="/auth/register" class="font-medium text-yellow-600 hover:text-yellow-500">
                 Create one now
               </router-link>
             </p>

@@ -76,7 +76,7 @@
                                             <span class="text-gray-700 group-hover:text-yellow-600">{{ brand }}</span>
                                         </label>
                                     </div>
-                                    <button v-if="uniqueBrands.length > 5" @click="toggleBrands"
+                                    <button v-if="allBrands.length > 5" @click="toggleBrands"
                                         class="text-yellow-600 hover:text-yellow-700 text-sm mt-3 flex items-center font-medium">
                                         {{ hasMoreBrands ? 'View More' : 'Show Less' }}
                                         <i
@@ -149,8 +149,8 @@
                                 <!-- Dropdown Menu -->
                                 <div v-if="sortDropdownOpen"
                                     class="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-20 border border-gray-200 overflow-hidden">
-                                    <button v-for="option in sortOptions" :key="option.value"
-                                        @click="updateSort(option.value)"
+                                    <button v-for="option in sortOptions" :key="`${option.value}-${option.direction}`"
+                                        @click="updateSort(option.value, option.direction)"
                                         class="w-full text-left px-4 py-3 hover:bg-gray-100 flex justify-between items-center border-b border-gray-100 last:border-0 group"
                                         :class="{ 'bg-gray-50': sortBy === option.value && sortDirection === option.direction }">
                                         <span
@@ -289,26 +289,6 @@
                             </router-link>
                         </div>
                     </div>
-
-                    <!-- Pagination - Bottom -->
-                    <div v-if="products.length > 0" class="flex justify-center mt-8">
-                        <div class="flex items-center space-x-1">
-                            <button v-for="page in Math.min(totalPages, 5)" :key="page"
-                                @click="currentPage = page; scrollToTop()"
-                                class="w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-200 text-sm font-medium"
-                                :class="currentPage === page ? 'bg-yellow-500 text-gray-900' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'">
-                                {{ page }}
-                            </button>
-
-                            <span v-if="totalPages > 5" class="px-2 text-gray-600">...</span>
-
-                            <button v-if="totalPages > 5" @click="currentPage = totalPages; scrollToTop()"
-                                class="w-10 h-10 flex items-center justify-center rounded-full transition-colors duration-200 text-sm font-medium"
-                                :class="currentPage === totalPages ? 'bg-yellow-500 text-gray-900' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'">
-                                {{ totalPages }}
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -362,6 +342,7 @@ export default {
                 }
             },
             uniqueBrands: [],
+            allBrands: [],
             visibleCategoryCount: 5,
             visibleBrandCount: 5
         };
@@ -379,7 +360,7 @@ export default {
             return this.displayCategories.slice(0, this.visibleCategoryCount);
         },
         displayedBrands() {
-            return this.uniqueBrands.slice(0, this.visibleBrandCount);
+            return this.allBrands.slice(0, this.visibleBrandCount);
         },
         getSortLabel() {
             const option = this.sortOptions.find(opt => opt.value === this.sortBy && opt.direction === this.sortDirection);
@@ -389,7 +370,7 @@ export default {
             return this.visibleCategoryCount < this.displayCategories.length;
         },
         hasMoreBrands() {
-            return this.visibleBrandCount < this.uniqueBrands.length;
+            return this.visibleBrandCount < this.allBrands.length;
         }
     },
     watch: {
@@ -442,19 +423,28 @@ export default {
                 console.error('Error fetching categories:', error);
             }
         },
+        async fetchAllBrands() {
+            try {
+                const response = await api.get('/products/');
+                this.allBrands = [...new Set(response.data.map(product => product.brand))].sort();
+                
+                if (this.uniqueBrands.length === 0) {
+                    this.uniqueBrands = [...this.allBrands];
+                }
+            } catch (error) {
+                console.error('Error fetching all brands:', error);
+            }
+        },
         async fetchProducts() {
             this.loading = true;
             const params = new URLSearchParams();
 
-            // Text search for product name
             if (this.searchQuery) {
                 params.append('search', this.searchQuery);
             }
 
-            // Check for category_name in URL query
             const categoryNameFromQuery = this.$route.query.category_name;
 
-            // Multiple category filter
             if (this.selectedCategories.length > 0) {
                 const selectedCategoryNames = this.selectedCategories
                     .map(categoryId => {
@@ -467,12 +457,10 @@ export default {
                     params.append('category', categoryName);
                 });
             }
-            // If no categories are selected but we have a category_name in the URL
             else if (categoryNameFromQuery && !this.$route.query.category) {
                 params.append('category', categoryNameFromQuery);
             }
 
-            // Multiple brand filter
             if (this.selectedBrands.length > 0) {
                 this.selectedBrands.forEach(brand => {
                     params.append('brand', brand);
@@ -490,6 +478,7 @@ export default {
             if (this.sortDirection === 'desc') {
                 orderingField = `-${orderingField}`;
             }
+
             params.append('ordering', orderingField);
 
             try {
@@ -517,8 +506,8 @@ export default {
                 this.scrollToTop();
             }
         },
-        updateSort(value) {
-            const option = this.sortOptions.find(opt => opt.value === value);
+        updateSort(value, direction) {
+            const option = this.sortOptions.find(opt => opt.value === value && opt.direction === direction);
             if (option) {
                 this.sortBy = option.value;
                 this.sortDirection = option.direction;
@@ -535,7 +524,7 @@ export default {
         },
         toggleBrands() {
             if (this.visibleBrandCount === 5) {
-                this.visibleBrandCount = this.uniqueBrands.length;
+                this.visibleBrandCount = this.allBrands.length;
             } else {
                 this.visibleBrandCount = 5;
             }
@@ -544,12 +533,10 @@ export default {
             this.sortDropdownOpen = !this.sortDropdownOpen;
         },
         async handleCategoryNameFilter(categoryName) {
-            // First make sure categories are loaded
             if (this.displayCategories.length === 0) {
                 await this.fetchCategories();
             }
 
-            // Find the category ID that matches the name
             const category = this.displayCategories.find(
                 cat => cat.category_name.toLowerCase() === categoryName.toLowerCase()
             );
@@ -567,16 +554,13 @@ export default {
             let min = parseFloat(this.priceRange.min);
             let max = parseFloat(this.priceRange.max);
 
-            // Handle NaN cases
             if (isNaN(min)) min = null;
             if (isNaN(max)) max = null;
 
-            // Ensure min doesn't exceed max
             if (min !== null && max !== null && min > max) {
                 this.priceRange.max = this.priceRange.min;
             }
 
-            // Ensure non-negative values
             if (min !== null && min < 0) this.priceRange.min = 0;
             if (max !== null && max < 0) this.priceRange.max = 0;
 
@@ -626,8 +610,10 @@ export default {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     },
-    created() {
-        this.fetchCategories();
+    async created() {
+        await this.fetchCategories();
+        await this.fetchAllBrands();
+        this.fetchProducts();
         this.scrollToTop();
     },
     mounted() {

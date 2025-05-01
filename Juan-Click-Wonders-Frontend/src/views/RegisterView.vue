@@ -121,56 +121,6 @@
                   />
                 </div>
                 <p v-if="passwordError" class="mt-1 text-sm text-red-600">{{ passwordError }}</p>
-                
-                <!-- Password strength meter -->
-                <div v-if="password1" class="mt-2">
-                  <div class="mb-1 flex justify-between">
-                    <p class="text-xs text-gray-500">Password strength:</p>
-                    <p class="text-xs" :class="strengthColor">{{ strengthText }}</p>
-                  </div>
-                  <div class="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      class="h-full rounded-full transition-all duration-300" 
-                      :class="strengthBarColor"
-                      :style="{ width: `${passwordStrengthPercent}%` }"
-                    ></div>
-                  </div>
-                  <ul class="mt-2 text-xs text-gray-500 space-y-1">
-                    <li class="flex items-center">
-                      <span :class="[password1.length >= 8 ? 'text-green-500' : 'text-gray-400']">
-                        <svg v-if="password1.length >= 8" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </span>
-                      At least 8 characters
-                    </li>
-                    <li class="flex items-center">
-                      <span :class="[/[a-zA-Z]/.test(password1) ? 'text-green-500' : 'text-gray-400']">
-                        <svg v-if="/[a-zA-Z]/.test(password1)" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </span>
-                      Includes letters
-                    </li>
-                    <li class="flex items-center">
-                      <span :class="[/\d/.test(password1) ? 'text-green-500' : 'text-gray-400']">
-                        <svg v-if="/\d/.test(password1)" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </span>
-                      Includes numbers
-                    </li>
-                  </ul>
-                </div>
               </div>
 
               <div>
@@ -191,6 +141,56 @@
                   />
                 </div>
               </div>
+            </div>
+            
+            <!-- Password strength meter - moved outside the grid for full width -->
+            <div v-if="password1" class="mt-2">
+              <div class="mb-1 flex justify-between">
+                <p class="text-xs text-gray-500">Password strength:</p>
+                <p class="text-xs" :class="strengthColor">{{ strengthText }}</p>
+              </div>
+              <div class="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  class="h-full rounded-full transition-all duration-300" 
+                  :class="strengthBarColor"
+                  :style="{ width: `${passwordStrengthPercent}%` }"
+                ></div>
+              </div>
+              <ul class="mt-2 text-xs text-gray-500 space-y-1">
+                <li class="flex items-center">
+                  <span :class="[password1.length >= 8 ? 'text-green-500' : 'text-gray-400']">
+                    <svg v-if="password1.length >= 8" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </span>
+                  At least 8 characters
+                </li>
+                <li class="flex items-center">
+                  <span :class="[/[a-zA-Z]/.test(password1) ? 'text-green-500' : 'text-gray-400']">
+                    <svg v-if="/[a-zA-Z]/.test(password1)" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </span>
+                  Includes letters
+                </li>
+                <li class="flex items-center">
+                  <span :class="[/\d/.test(password1) ? 'text-green-500' : 'text-gray-400']">
+                    <svg v-if="/\d/.test(password1)" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </span>
+                  Includes numbers
+                </li>
+              </ul>
             </div>
 
             <!-- Alert Message -->
@@ -262,13 +262,9 @@ export default {
       if (!this.password1) return 0;
       
       let strength = 0;
-      // Length check
       if (this.password1.length >= 8) strength += 30;
-      // Letter check
       if (/[a-zA-Z]/.test(this.password1)) strength += 30;
-      // Number check
       if (/\d/.test(this.password1)) strength += 30;
-      // Special character bonus
       if (/[^a-zA-Z0-9]/.test(this.password1)) strength += 10;
       
       return Math.min(strength, 100);
@@ -328,7 +324,6 @@ export default {
       try {
         const response = await axios.post("http://127.0.0.1:8000/api/auth/register/", userData);
         if (response.status === 201) {
-          // Display success message or redirect immediately
           setTimeout(() => {
             this.$router.push("/auth/login/?registered=true");
           }, 1000);
@@ -359,11 +354,4 @@ export default {
 </script>
 
 <style scoped>
-/* Add any page-specific styles here */
 </style>
-
-
-<!-- asd@jcw.com - jcwadmin123
-qwe@jcw.com - jcwadmin123
-james@gmail.com - jamespogi123
-james@jcw.com - admin123 -->

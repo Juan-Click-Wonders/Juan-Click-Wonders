@@ -508,10 +508,6 @@ export default {
         },
         async clearCart() {
             try {
-                if (!confirm('Are you sure you want to clear your cart? This action cannot be undone.')) {
-                    return;
-                }
-
                 this.isLoading = true;
 
                 if (this.cart) {

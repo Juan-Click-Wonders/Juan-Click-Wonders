@@ -241,7 +241,7 @@
                         <!-- Reviews Content - Moved to right side -->
                         <div class="lg:w-2/3">
                             <!-- Add Review Form -->
-                            <div v-if="isLoggedIn && !hasUserRated && product" class="p-6 border-b border-gray-200">
+                            <div v-if="isLoggedIn && !hasUserRated && canUserRate && product" class="p-6 border-b border-gray-200">
                                 <div v-if="ratingSubmitted" class="bg-green-50 p-4 rounded-md mb-4 text-green-700">
                                     Your review has been submitted successfully!
                                 </div>
@@ -327,11 +327,58 @@
                                 </div>
                             </div>
 
+                            <!-- Already reviewed message -->
                             <div v-else-if="isLoggedIn && hasUserRated" class="p-6 border-b border-gray-200 bg-gray-50">
-                                <p class="text-gray-700">You have already reviewed this product. Thank you for your
-                                    feedback!</p>
+                                <div class="flex items-center text-gray-700 mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span class="font-medium">You have already reviewed this product</span>
+                                </div>
+                                <p class="text-gray-600 ml-7">Thank you for your feedback!</p>
                             </div>
 
+                            <!-- Purchased but not delivered message -->
+                            <div v-else-if="isLoggedIn && hasUserPurchased && !hasUserReceived" class="p-6 border-b border-gray-200 bg-gray-50">
+                                <div class="flex items-start text-gray-700 mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <span class="font-medium">Your order is on the way</span>
+                                        <p class="text-gray-600 mt-1">You can leave a review once your order has been delivered. Please check your order status in your account.</p>
+                                        <router-link to="/orders" 
+                                            class="mt-3 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors inline-flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                            </svg>
+                                            View Orders
+                                        </router-link>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-else-if="isLoggedIn && !hasUserPurchased" class="p-6 border-b border-gray-200 bg-gray-50">
+                                <div class="flex items-start text-gray-700 mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <span class="font-medium">You need to purchase this product before rating</span>
+                                        <p class="text-gray-600 mt-1">Only customers who have purchased this product can leave a review.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Loading state while checking eligibility -->
+                            <div v-else-if="isLoggedIn && checkingRatingEligibility" class="p-6 border-b border-gray-200 bg-gray-50">
+                                <div class="flex items-center text-gray-700 space-x-2">
+                                    <div class="animate-spin h-4 w-4 border-b-2 border-yellow-500 rounded-full"></div>
+                                    <span>Checking if you can review this product...</span>
+                                </div>
+                            </div>
+
+                            <!-- Not logged in message -->
                             <div v-else-if="!isLoggedIn" class="p-6 border-b border-gray-200 bg-gray-50">
                                 <p class="text-gray-700">
                                     Please <router-link to="/auth/login"
@@ -391,7 +438,7 @@
                                 </div>
                             </div>
 
-                            <div v-else class="p-6 text-center">
+                            <div v-else class="p-6 text-left">
                                 <p class="text-gray-600">No reviews yet. Be the first to review this product!</p>
                             </div>
                         </div>
@@ -482,7 +529,12 @@ export default {
             showImageModal: false,
             modalImageUrl: null,
             isPreviewImage: false,
-            isInWishlist: false
+            isInWishlist: false,
+            hasUserPurchased: false,
+            hasUserReceived: false,
+            canUserRate: false,
+            checkingRatingEligibility: false,
+            userAuthState: localStorage.getItem('isAuthenticated') === 'true'
         };
     },
     computed: {
@@ -491,7 +543,7 @@ export default {
             return this.product.category_name || 'Unknown Category';
         },
         isLoggedIn() {
-            return localStorage.getItem('isAuthenticated') === 'true';
+            return this.userAuthState;
         },
         averageRating() {
             if (!this.ratings || this.ratings.length === 0) return 0;
@@ -546,13 +598,16 @@ export default {
         async fetchProduct() {
             try {
                 this.loading = true;
+                this.hasUserPurchased = false;
+                this.hasUserReceived = false;
+                this.canUserRate = false;
+                
                 const productId = this.$route.params.id;
                 const response = await api.get(`/products/${productId}`);
                 this.product = response.data;
                 this.newRating.product = this.product.product_id;
                 this.loading = false;
                 this.fetchRatings();
-
 
                 if (this.isLoggedIn) {
                     this.checkWishlistStatus();
@@ -575,17 +630,152 @@ export default {
                 console.error('Error checking wishlist status:', error);
             }
         },
+        async checkRatingEligibility() {
+            if (!this.isLoggedIn || !this.product || this.userHasRatedProduct) return;
+            
+            try {
+                this.checkingRatingEligibility = true;
+                
+                // Check user's orders for this product
+                const ordersResponse = await api.get('/orders/');
+                
+                if (!ordersResponse.data || !Array.isArray(ordersResponse.data) || ordersResponse.data.length === 0) {
+                    console.error('No orders found or invalid order data format');
+                    this.hasUserPurchased = false;
+                    this.hasUserReceived = false;
+                    this.canUserRate = false;
+                    return;
+                }
+                
+                // Get current product ID and name for matching
+                const productId = parseInt(this.product.product_id || this.product.id || this.product.ID || '0');
+                const productName = this.product.name;
+                
+                // Track if we found any matching orders
+                let foundMatchingOrders = false;
+                let foundDeliveredOrders = false;
+                
+                // Process each order to check if it contains our product
+                for (const order of ordersResponse.data) {
+                    let orderContainsProduct = false;
+                    let matchReason = 'None';
+                    
+                    // Case 1: Order has a direct product property that is an object with name property
+                    if (order.product && typeof order.product === 'object') {
+                        // Try to match by name first if available (most reliable in this system)
+                        if (order.product.name && productName && order.product.name.trim().toLowerCase() === productName.trim().toLowerCase()) {
+                            orderContainsProduct = true;
+                            matchReason = 'Name match';
+                        }
+                        
+                        // Also try to match by ID (various possible properties)
+                        const orderProductId = parseInt(order.product.product_id || order.product.id || order.product.ID || '0');
+                        
+                        if (orderProductId > 0 && orderProductId === productId) {
+                            orderContainsProduct = true;
+                            matchReason = 'ID match';
+                        }
+                    } 
+                    // Case 2: Order has a direct product property that is a primitive value
+                    else if (order.product && (typeof order.product === 'number' || typeof order.product === 'string')) {
+                        const orderProductId = parseInt(order.product);
+                        
+                        if (orderProductId === productId) {
+                            orderContainsProduct = true;
+                            matchReason = 'Direct ID match';
+                        }
+                    }
+                    
+                    // Case 3: Order has array of order_items
+                    if (!orderContainsProduct && order.order_items && Array.isArray(order.order_items)) {
+                        
+                        for (const item of order.order_items) {                            
+                            if (item.product) {
+                                if (typeof item.product === 'object') {
+                                    // Try name match first
+                                    if (item.product.name && productName && 
+                                        item.product.name.trim().toLowerCase() === productName.trim().toLowerCase()) {
+                                        orderContainsProduct = true;
+                                        matchReason = 'Item name match';
+                                        break;
+                                    }
+                                    
+                                    // Try ID match
+                                    const itemProductId = parseInt(item.product.product_id || item.product.id || item.product.ID || '0');
+                                    
+                                    if (itemProductId > 0 && itemProductId === productId) {
+                                        orderContainsProduct = true;
+                                        matchReason = 'Item ID match';
+                                        break;
+                                    }
+                                } else if (typeof item.product === 'number' || typeof item.product === 'string') {
+                                    const itemProductId = parseInt(item.product);
+                                    
+                                    if (itemProductId === productId) {
+                                        orderContainsProduct = true;
+                                        matchReason = 'Item direct ID match';
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Case 4: Check order fields directly (some API formats simplify this way)
+                    if (!orderContainsProduct) {
+                        // Try matching the order's own fields
+                        if (order.product_id && parseInt(order.product_id) === productId) {
+                            orderContainsProduct = true;
+                            matchReason = 'Order product_id field match';
+                        } else if (order.name && productName && order.name.trim().toLowerCase() === productName.trim().toLowerCase()) {
+                            orderContainsProduct = true;
+                            matchReason = 'Order name field match';
+                        }
+                    }
+                    
+                    // If this order contains our product, check if it's been delivered
+                    if (orderContainsProduct) {
+                        foundMatchingOrders = true;
+                        
+                        // Check order status (various possible formats)
+                        const status = typeof order.status === 'string' ? order.status.toLowerCase() : '';
+                        if (
+                            status === 'd' || 
+                            status === 'delivered' || 
+                            status === 'complete' || 
+                            status === 'completed' ||
+                            status.includes('deliver') ||
+                            status.includes('complet')
+                        ) {
+                            foundDeliveredOrders = true;
+                        }
+                    }
+                }
+                
+                // Final determination
+                this.hasUserPurchased = foundMatchingOrders;
+                this.hasUserReceived = foundDeliveredOrders;
+                this.canUserRate = foundDeliveredOrders;
+            } catch (error) {
+                console.error("Error checking rating eligibility:", error);
+                // Set defaults in case of error
+                this.hasUserPurchased = false;
+                this.hasUserReceived = false;
+                this.canUserRate = false;
+            } finally {
+                this.checkingRatingEligibility = false;
+            }
+        },
         async fetchRatings() {
             if (!this.product) return;
 
             try {
-
                 const response = await api.get(`/ratings/`, {
                     params: {
                         product: this.product.product_id
                     }
                 });
-                
+
                 this.ratings = response.data.map(rating => {
                     const processedRating = { ...rating };
 
@@ -620,9 +810,12 @@ export default {
                             this.userHasRatedProduct = true;
                         } else {
                             this.userHasRatedProduct = false;
+                            // Check if the user is eligible to rate the product
+                            this.checkRatingEligibility();
                         }
                     } catch (userRatingError) {
                         console.error("Could not fetch user-specific ratings:", userRatingError);
+                        this.checkRatingEligibility();
                     }
 
                     this.getCurrentUser();
@@ -633,6 +826,7 @@ export default {
         },
         async getCurrentUser() {
             try {
+                // Use the correct endpoint path with the /api prefix
                 const response = await api.get('/api/profile/');
 
                 this.userProfile = response.data;
@@ -683,7 +877,7 @@ export default {
             } catch (error) {
                 console.error('Error updating wishlist:', error);
                 this.isInWishlist = wasInWishlist;
-                
+
                 if (error.response && error.response.status === 401) {
                     this.$router.push('/auth/login');
                 }
@@ -857,7 +1051,20 @@ export default {
                     console.error("Error response status:", error.response.status);
 
                     if (error.response.status === 403) {
-                        alert("You have already reviewed this product.");
+                        // Check for specific error messages
+                        if (error.response.data && error.response.data.detail) {
+                            if (error.response.data.detail.includes("must purchase")) {
+                                alert("You must purchase this product before you can rate it.");
+                            } else if (error.response.data.detail.includes("can only rate products that have been delivered")) {
+                                alert("You can only rate products that have been delivered to you.");
+                            } else if (error.response.data.detail.includes("already rated")) {
+                                alert("You have already reviewed this product.");
+                            } else {
+                                alert(error.response.data.detail);
+                            }
+                        } else {
+                            alert("You have already reviewed this product.");
+                        }
                         this.fetchRatings();
                     } else if (error.response.status === 400) {
                         let errorMessage = "There was an error submitting your review. ";
@@ -915,7 +1122,7 @@ export default {
                 if (!cartResponse.data || cartResponse.data.length === 0) {
                     throw new Error('Cart not found. Please try logging out and logging back in.');
                 }
-                
+
                 const cart = cartResponse.data[0];
 
                 // Add the item to the cart
@@ -927,7 +1134,7 @@ export default {
                 // Update the cart count in localStorage
                 const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
                 localStorage.setItem('cartCount', (currentCount + this.quantity).toString());
-                
+
                 // Dispatch event to update cart count in other components
                 window.dispatchEvent(new Event('cart-updated'));
 
@@ -977,13 +1184,134 @@ export default {
             this.isPreviewImage = true;
             this.showImageModal = true;
             document.body.style.overflow = 'hidden';
+        },
+        async debugOrderCheck() {
+            if (!this.product) {
+                alert("Product not loaded yet. Please wait.");
+                return;
+            }
+            
+            try {
+                // Get the user's orders
+                const ordersResponse = await api.get('/orders/');
+                
+                const productId = this.product.product_id || this.product.id || this.product.ID;
+                const productName = this.product.name;
+                
+                let matchingOrders = [];
+                
+                if (Array.isArray(ordersResponse.data)) {
+                    // Process each order to find matches
+                    for (const order of ordersResponse.data) {
+                        let orderInfo = {
+                            order_id: order.order_id || order.id || 'Unknown',
+                            status: order.status || 'Unknown',
+                            contains_product: false,
+                            match_reason: '',
+                            order_data: order
+                        };
+                        
+                        // Check direct product match
+                        if (order.product) {
+                            if (typeof order.product === 'object') {
+                                const orderProductId = order.product.product_id || order.product.id || order.product.ID;
+                                if (parseInt(orderProductId) === parseInt(productId)) {
+                                    orderInfo.contains_product = true;
+                                    orderInfo.match_reason = 'Direct product object match';
+                                }
+                            } else if (typeof order.product === 'number' || typeof order.product === 'string') {
+                                if (parseInt(order.product) === parseInt(productId)) {
+                                    orderInfo.contains_product = true;
+                                    orderInfo.match_reason = 'Direct product ID match';
+                                }
+                            }
+                        }
+                        
+                        // Case 2: Order has array of order_items
+                        if (!orderInfo.contains_product && order.order_items && Array.isArray(order.order_items)) {
+                            
+                            for (const item of order.order_items) {
+                                if (item.product) {
+                                    if (typeof item.product === 'object') {
+                                        const itemProductId = item.product.product_id || item.product.id || item.product.ID;
+                                        if (itemProductId === productId) {
+                                            orderInfo.contains_product = true;
+                                            orderInfo.match_reason = 'Match in order_items array (object)';
+                                            break;
+                                        }
+                                    } else if (typeof item.product === 'number' || typeof item.product === 'string') {
+                                        if (parseInt(item.product) === parseInt(productId)) {
+                                            orderInfo.contains_product = true;
+                                            orderInfo.match_reason = 'Match in order_items array (ID)';
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Case 3: The order itself might be the product entry (simplified API response)
+                        if (!orderInfo.contains_product) {
+                            if (order.product_id && parseInt(order.product_id) === parseInt(productId)) {
+                                orderInfo.contains_product = true;
+                                orderInfo.match_reason = 'Order has matching product_id';
+                            } else if (order.name && order.name === productName) {
+                                // Matching by name as a last resort if IDs don't match
+                                orderInfo.contains_product = true;
+                                orderInfo.match_reason = 'Order has matching product name';
+                            }
+                        }
+                        
+                        if (orderInfo.contains_product) {
+                            matchingOrders.push(orderInfo);
+                        }
+                    }
+                }
+                
+                if (matchingOrders.length === 0) {
+                    alert(`No orders found containing this product (ID: ${productId}, Name: ${productName})`);
+                } else {
+                    const orderSummary = matchingOrders.map(order => 
+                        `Order #${order.order_id} - Status: ${order.status}\nMatch found: ${order.match_reason}`
+                    ).join('\n\n');
+                    
+                    alert(`Found ${matchingOrders.length} orders with this product:\n\n${orderSummary}`);
+                    
+                    // Rerun the eligibility check with the new information
+                    await this.checkRatingEligibility();
+                }
+            } catch (error) {
+                console.error("Error with debug order check:", error);
+                alert("An error occurred while checking orders. See console for details.");
+            }
         }
     },
     async created() {
-        this.isLoggedIn = localStorage.getItem('isAuthenticated') === 'true';
-
-        this.fetchCategories();
-        this.fetchProduct();
+        try {
+            await this.fetchCategories();
+            await this.fetchProduct();
+            
+            if (this.isLoggedIn && this.product) {
+                // First check if user has already rated the product
+                const userRatingsResponse = await api.get(`/ratings/`, {
+                    params: {
+                        product: this.product.product_id,
+                        user_ratings: true
+                    }
+                });
+                
+                this.userHasRatedProduct = !!(userRatingsResponse.data && userRatingsResponse.data.length > 0);
+                
+                if (!this.userHasRatedProduct) {
+                    // Add a slight delay to ensure all data is properly loaded
+                    setTimeout(() => {
+                        this.checkRatingEligibility();
+                    }, 1000);
+                }
+            }
+        } catch (error) {
+            console.error("Error during component initialization:", error);
+        }
     },
     watch: {
         '$route.params.id'() {
