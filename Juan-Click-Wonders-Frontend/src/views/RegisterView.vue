@@ -121,6 +121,56 @@
                   />
                 </div>
                 <p v-if="passwordError" class="mt-1 text-sm text-red-600">{{ passwordError }}</p>
+                
+                <!-- Password strength meter -->
+                <div v-if="password1" class="mt-2">
+                  <div class="mb-1 flex justify-between">
+                    <p class="text-xs text-gray-500">Password strength:</p>
+                    <p class="text-xs" :class="strengthColor">{{ strengthText }}</p>
+                  </div>
+                  <div class="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      class="h-full rounded-full transition-all duration-300" 
+                      :class="strengthBarColor"
+                      :style="{ width: `${passwordStrengthPercent}%` }"
+                    ></div>
+                  </div>
+                  <ul class="mt-2 text-xs text-gray-500 space-y-1">
+                    <li class="flex items-center">
+                      <span :class="[password1.length >= 8 ? 'text-green-500' : 'text-gray-400']">
+                        <svg v-if="password1.length >= 8" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </span>
+                      At least 8 characters
+                    </li>
+                    <li class="flex items-center">
+                      <span :class="[/[a-zA-Z]/.test(password1) ? 'text-green-500' : 'text-gray-400']">
+                        <svg v-if="/[a-zA-Z]/.test(password1)" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </span>
+                      Includes letters
+                    </li>
+                    <li class="flex items-center">
+                      <span :class="[/\d/.test(password1) ? 'text-green-500' : 'text-gray-400']">
+                        <svg v-if="/\d/.test(password1)" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </span>
+                      Includes numbers
+                    </li>
+                  </ul>
+                </div>
               </div>
 
               <div>
@@ -206,6 +256,44 @@ export default {
       message: "",
       isLoading: false
     };
+  },
+  computed: {
+    passwordStrengthPercent() {
+      if (!this.password1) return 0;
+      
+      let strength = 0;
+      // Length check
+      if (this.password1.length >= 8) strength += 30;
+      // Letter check
+      if (/[a-zA-Z]/.test(this.password1)) strength += 30;
+      // Number check
+      if (/\d/.test(this.password1)) strength += 30;
+      // Special character bonus
+      if (/[^a-zA-Z0-9]/.test(this.password1)) strength += 10;
+      
+      return Math.min(strength, 100);
+    },
+    strengthText() {
+      const strength = this.passwordStrengthPercent;
+      if (strength < 30) return "Very weak";
+      if (strength < 60) return "Weak";
+      if (strength < 80) return "Medium";
+      return "Strong";
+    },
+    strengthColor() {
+      const strength = this.passwordStrengthPercent;
+      if (strength < 30) return "text-red-600";
+      if (strength < 60) return "text-orange-500";
+      if (strength < 80) return "text-yellow-500";
+      return "text-green-600";
+    },
+    strengthBarColor() {
+      const strength = this.passwordStrengthPercent;
+      if (strength < 30) return "bg-red-600";
+      if (strength < 60) return "bg-orange-500";
+      if (strength < 80) return "bg-yellow-500";
+      return "bg-green-600";
+    }
   },
   methods: {
     async register() {
