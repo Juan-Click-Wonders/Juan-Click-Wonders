@@ -205,8 +205,6 @@ export default {
                     const results = await Promise.all(productPromises);
                     this.wishlistItems = results.filter(item => item !== null);
                     
-                    // Log the processed wishlist items for debugging
-                    console.log('Processed wishlist items:', this.wishlistItems);
                 } else {
                     this.wishlistItems = [];
                 }

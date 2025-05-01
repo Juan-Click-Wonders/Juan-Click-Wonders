@@ -226,7 +226,6 @@ export default {
             authState.value = localStorage.getItem('isAuthenticated') === 'true';
             // Update userName when auth state changes
             userName.value = localStorage.getItem('userName') || 'User';
-            console.log('Auth state updated:', authState.value, 'User name:', userName.value);
         };
 
         onMounted(() => {

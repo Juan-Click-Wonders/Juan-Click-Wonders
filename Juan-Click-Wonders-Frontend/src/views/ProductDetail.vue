@@ -586,13 +586,7 @@ export default {
                     }
                 });
 
-                if (response.data && response.data.length > 0) {
-                    console.log("First rating object:", response.data[0]);
-                }
-
                 this.ratings = response.data.map(rating => {
-                    console.log("Original rating image_url:", rating.image_url);
-
                     const processedRating = { ...rating };
 
                     if (!processedRating.user_name) {
@@ -612,11 +606,6 @@ export default {
 
                     return processedRating;
                 });
-
-                if (this.ratings.length > 0 && this.ratings[0].image_url) {
-                    console.log("Processed first rating image URL:",
-                        this.getRatingImageUrl(this.ratings[0].image_url));
-                }
 
                 if (this.isLoggedIn) {
                     try {
@@ -706,36 +695,26 @@ export default {
             this.submittingRating = true;
 
             try {
-                console.log("Starting submitRating process");
                 let userId = null;
                 let profileResponse = null;
 
                 try {
-                    console.log("Fetching user profile data");
                     profileResponse = await api.get('/api/profile/');
-                    console.log("Profile response:", profileResponse.data);
 
                     if (profileResponse.data) {
                         this.userProfile = profileResponse.data;
 
                         if (profileResponse.data.id) {
                             userId = profileResponse.data.id;
-                            console.log("Using profile ID:", userId);
                         } else if (profileResponse.data.user && profileResponse.data.user.id) {
                             userId = profileResponse.data.user.id;
-                            console.log("Using user.id:", userId);
                         } else if (profileResponse.data.user_id) {
                             userId = profileResponse.data.user_id;
-                            console.log("Using user_id:", userId);
                         } else {
-                            console.log("Profile object keys:", Object.keys(profileResponse.data));
-                            console.log("Full profile data:", JSON.stringify(profileResponse.data));
-
                             userId = 1;
-                            console.log("Using default ID:", userId);
                         }
                     } else {
-                        console.log("No profile data received");
+                        console.error("No profile data received");
                     }
                 } catch (profileError) {
                     console.error("Error fetching profile:", profileError);
@@ -772,9 +751,6 @@ export default {
                 const fileInput = this.$refs.fileInput;
                 const hasImage = fileInput && fileInput.files && fileInput.files.length > 0;
 
-                console.log("Rating data being submitted:", { ...ratingData, auth_token: "[redacted]" });
-                console.log("Has image:", hasImage);
-
                 let response;
 
                 if (hasImage) {
@@ -803,20 +779,10 @@ export default {
                     }
 
                     const file = fileInput.files[0];
-                    console.log("File being uploaded:", file);
-                    console.log("File name:", file.name);
-                    console.log("File type:", file.type);
-                    console.log("File size:", file.size, "bytes");
 
                     formData.append('image_url', file);
 
-                    console.log("FormData entries:");
-                    for (let pair of formData.entries()) {
-                        console.log(pair[0] + ': ' + (pair[0] === 'image_url' ? '[FILE]' : pair[1]));
-                    }
-
                     const ratingEndpoint = '/ratings/create/';
-                    console.log(`Submitting rating with image to ${ratingEndpoint}`);
 
                     try {
                         response = await api.post(ratingEndpoint, formData, {
@@ -827,7 +793,6 @@ export default {
                         });
                     } catch (innerError) {
                         console.error("Error with first endpoint:", innerError);
-                        console.log("Trying alternative endpoint...");
 
                         const altEndpoint = '/api/ratings/create/';
                         response = await api.post(altEndpoint, formData, {
@@ -839,7 +804,6 @@ export default {
                     }
                 } else {
                     const ratingEndpoint = '/ratings/create/';
-                    console.log(`Submitting rating without image to ${ratingEndpoint}`);
 
                     try {
                         response = await api.post(ratingEndpoint, ratingData, {
@@ -847,7 +811,6 @@ export default {
                         });
                     } catch (innerError) {
                         console.error("Error with first endpoint:", innerError);
-                        console.log("Trying alternative endpoint...");
 
                         const altEndpoint = '/api/ratings/create/';
                         response = await api.post(altEndpoint, ratingData, {
@@ -855,8 +818,6 @@ export default {
                         });
                     }
                 }
-
-                console.log("Rating submission successful:", response.data);
 
                 this.ratingSubmitted = true;
 
@@ -876,8 +837,6 @@ export default {
                     }
 
                     this.ratings.unshift(processedNewRating);
-
-                    console.log("Successfully added rating with user_name:", processedNewRating.user_name);
                 }
 
                 this.newRating = {
@@ -889,10 +848,6 @@ export default {
                 if (fileInput) fileInput.value = '';
 
                 this.fetchRatings();
-
-                if (response && response.data && response.data.image_url) {
-                    console.log("Submitted rating with image:", response.data.image_url);
-                }
 
                 setTimeout(() => {
                     this.ratingSubmitted = false;
