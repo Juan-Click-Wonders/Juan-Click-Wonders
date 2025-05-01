@@ -82,20 +82,13 @@ class RatingsCreateView(generics.CreateAPIView):
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def create(self, request, *args, **kwargs):
-        # Debug incoming request data
-        print("Request Data Type:", type(request.data))
-        print("Request Data:", request.data)
-        print("Request FILES:", request.FILES)
-
         # Handle the file upload explicitly
         data = request.data.copy()
 
         # Check if file exists in request.FILES
         if 'image_url' in request.FILES:
-            print("Image found in request.FILES with key 'image_url'")
             data['image_url'] = request.FILES['image_url']
         elif 'image' in request.FILES:
-            print("Image found in request.FILES with key 'image'")
             # Rename 'image' to 'image_url' to match our model field
             data['image_url'] = request.FILES['image']
 
@@ -108,8 +101,26 @@ class RatingsCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         product_id = self.request.data.get('product')
+
+        # Check if user has already rated this product
         if Rating.objects.filter(user=self.request.user.profile, product_id=product_id).exists():
             raise PermissionDenied("You have already rated this product")
+
+        # Check if user has purchased this product
+        user_orders = Order.objects.filter(
+            user=self.request.user.profile,
+            product_id=product_id
+        )
+
+        if not user_orders.exists():
+            raise PermissionDenied(
+                "You must purchase this product before rating it")
+
+        # Check if at least one order has been delivered
+        delivered_orders = user_orders.filter(status='D')
+        if not delivered_orders.exists():
+            raise PermissionDenied(
+                "You can only rate products that have been delivered to you")
 
         # Get the user's name from the profile or user object
         user_name = None
@@ -394,6 +405,7 @@ class UserOrdersApi(generics.ListAPIView):
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user.profile).order_by('-order_id')
 
+
 class OrderStatusUpdateAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -408,10 +420,9 @@ class OrderStatusUpdateAPI(APIView):
             return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Check if the user is authorized to update this order
-        # In a real application, you might want to check if the user is staff or admin
         if not request.user.is_staff and order.user != request.user.profile:
             return Response({"error": "You don't have permission to update this order."},
-                           status=status.HTTP_403_FORBIDDEN)
+                            status=status.HTTP_403_FORBIDDEN)
 
         new_status = request.data.get('status')
         if not new_status:
@@ -421,7 +432,7 @@ class OrderStatusUpdateAPI(APIView):
         valid_statuses = dict(Order.ORDER_STATUSES)
         if new_status not in valid_statuses:
             return Response({"error": f"Invalid status. Valid statuses are: {', '.join(valid_statuses.keys())}"},
-                           status=status.HTTP_400_BAD_REQUEST)
+                            status=status.HTTP_400_BAD_REQUEST)
 
         # Get the old status for comparison
         old_status = order.status
@@ -431,18 +442,8 @@ class OrderStatusUpdateAPI(APIView):
         order.save()
 
         # If the order status is changing to "Delivered" (D), update the product stock
-        # This is where we implement the requested feature
         if new_status == 'D' and old_status != 'D':
             product = order.product
-            # The stock was already reduced during payment, but we might want to
-            # update other product metrics or perform additional actions when
-            # the order is successfully delivered
-
-            # For example, we could increment a "successful_deliveries" counter if we had one
-            # Or we could trigger some analytics event
-
-            # For now, we'll just log that the order was successfully delivered
-            print(f"Order {order.order_id} for product {product.name} was successfully delivered.")
 
         return Response({
             "message": f"Order status updated to {valid_statuses[new_status]}.",
@@ -462,11 +463,9 @@ class WishlistRetrieveAPI(APIView):
 
         products = wishlist.products.all()
 
-        # Return a list of product IDs and their details
         result = []
         for product in products:
             result.append({
-                # Using a unique ID format for frontend
                 "id": f"wishlist_{product.product_id}",
                 "product": product.product_id
             })
@@ -531,9 +530,6 @@ class IsAdminCheckAPI(APIView):
         is_staff = request.user.is_staff
         is_superuser = request.user.is_superuser
         is_admin = is_staff or is_superuser
-
-        # Log the user's admin status
-        print(f"User: {request.user.email}, is_staff: {is_staff}, is_superuser: {is_superuser}, is_admin: {is_admin}")
 
         return Response({
             "is_admin": is_admin,
