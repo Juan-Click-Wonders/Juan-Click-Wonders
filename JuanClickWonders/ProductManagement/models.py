@@ -70,9 +70,7 @@ class CartItem(models.Model):
 
 class Payment(models.Model):
     PAYMENT_METHODS = [
-        ('COD', 'Cash on Delivery'),
         ('GCS', 'GCash'),
-        ('MYA', 'Maya'),
     ]
 
     user = models.ForeignKey(
@@ -83,8 +81,10 @@ class Payment(models.Model):
     )
     method = models.CharField(max_length=3, choices=PAYMENT_METHODS)
     amount = models.FloatField()
+    ref_id = models.CharField(max_length=255)
     success = models.BooleanField(default=None)
     timestamp = models.DateTimeField(auto_now_add=True)
+
 
 class Order(models.Model):
     order_id = models.AutoField(primary_key=True)
@@ -99,11 +99,13 @@ class Order(models.Model):
         ('R', 'To Receive'),
         ('D', 'Delivered'),
     ]
-    status = models.CharField(max_length=1, choices=ORDER_STATUSES, default='P')
+    status = models.CharField(
+        max_length=1, choices=ORDER_STATUSES, default='P')
 
     def __str__(self):
         return f"Order {self.order_id}"
-      
+
+
 class Wishlist(models.Model):
     user = models.OneToOneField(
         UserProfile, on_delete=models.CASCADE, related_name='wishlist'
