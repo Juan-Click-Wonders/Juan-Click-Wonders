@@ -40,7 +40,15 @@
                     <!-- User Actions -->
                     <div class="flex items-center space-x-4">
                         <!-- Cart -->
-                        <router-link to="/cart" class="relative p-2 hover:text-yellow-500 transition-colors">
+                        <router-link v-if="authState" to="/cart" class="relative p-2 hover:text-yellow-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <span v-if="cartCount > 0" class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                {{ cartCount }}
+                            </span>
+                        </router-link>
+                        <router-link v-else to="/auth/login" class="relative p-2 hover:text-yellow-500 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
@@ -103,7 +111,15 @@
                         
                         <!-- Cart and User -->
                         <div class="flex items-center space-x-4">
-                            <router-link to="/cart" class="relative p-1">
+                            <router-link v-if="authState" to="/cart" class="relative p-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                <span v-if="cartCount > 0" class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                    {{ cartCount }}
+                                </span>
+                            </router-link>
+                            <router-link v-else to="/auth/login" class="relative p-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
@@ -172,12 +188,14 @@
 </template>
 
 <script>
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
+import axios from "axios";
 
 export default {
     setup() {
         const route = useRoute();
+        const router = useRouter();
         const isAuthPage = computed(() => {
             return route.path.includes('/auth/');
         });
@@ -299,11 +317,19 @@ export default {
             this.showUserMenu = false;
             this.showMobileMenu = false;
             
-            // Dispatch event for components listening to auth state
+            // Dispatch events for components listening to auth and cart state
             window.dispatchEvent(new Event('auth-state-changed'));
+            window.dispatchEvent(new Event('cart-updated'));
             
-            // Redirect to login
-            this.$router.push('/auth/login');
+            // Make API call to logout endpoint
+            axios.post("http://127.0.0.1:8000/api/auth/logout/", {}, {
+                withCredentials: true
+            }).catch(error => {
+                console.error("Logout error:", error);
+            }).finally(() => {
+                // Redirect to login regardless of API call success
+                window.location.href = '/auth/login';
+            });
         }
     }
 };

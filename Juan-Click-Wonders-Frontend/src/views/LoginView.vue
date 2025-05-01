@@ -64,18 +64,11 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <input id="remember_me" type="checkbox" class="h-4 w-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500">
-                <label for="remember_me" class="ml-2 block text-sm text-gray-700">
-                  Remember me
-                </label>
-              </div>
-
+            <div class="flex items-center justify-end">
               <div class="text-sm">
-                <a href="/auth/forgot-password" class="font-medium text-yellow-600 hover:text-yellow-500">
-                  Forgot password?
-                </a>
+              <a href="/auth/forgot-password" class="font-medium text-yellow-600 hover:text-yellow-500">
+                Forgot password?
+              </a>
               </div>
             </div>
 
