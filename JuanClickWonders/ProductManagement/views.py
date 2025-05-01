@@ -1,7 +1,7 @@
 import requests
 from django.conf import settings
 from rest_framework import generics, status, filters
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
@@ -11,6 +11,7 @@ from urllib.parse import quote
 
 from ProductManagement.models import Products, Category, Cart, CartItem, Payment, Rating, Order, Wishlist
 from ProductManagement.serializers import ProductsSerializer, CategorySerializer, CartSerializer, CartItemSerializer, RatingSerializer, OrderSerializer
+
 
 class ProductListCreateApi(generics.ListCreateAPIView):
     serializer_class = ProductsSerializer
@@ -239,7 +240,7 @@ class PaymentAPI(APIView):
             return Response({"error": "Cart not found."}, status=status.HTTP_404_NOT_FOUND)
 
         method = request.data.get('method')
-        if method not in ['COD', 'GCS', 'MYA']:
+        if method != 'GCS':
             return Response({"error": "Invalid or missing payment method."}, status=status.HTTP_400_BAD_REQUEST)
 
         cart_items = CartItem.objects.filter(cart=cart)
@@ -248,6 +249,7 @@ class PaymentAPI(APIView):
 
         additional_info = None
         action_url = None
+        ref_id = None
 
         if total_amount <= 0:
             return Response({
@@ -257,9 +259,7 @@ class PaymentAPI(APIView):
                 "action_url": action_url,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        if method == 'COD':
-            payment_successful = True
-        elif method == 'GCS' or method == 'MYA':
+        if method == 'GCS':
             xendit_response = self.process_ewallet_payment(
                 total_amount, method)
             xendit_response_data = xendit_response.json()
@@ -269,13 +269,14 @@ class PaymentAPI(APIView):
                 additional_info = xendit_response_data
             else:
                 actions = xendit_response_data.get('actions', [])
+                ref_id = xendit_response_data.get('reference_id')
 
                 for action in actions:
                     if action.get('url_type') == 'WEB':
                         action_url = action.get('url')
                         break
 
-                payment_successful = True
+                payment_successful = None
                 additional_info = xendit_response_data
         else:
             payment_successful = False
@@ -285,21 +286,11 @@ class PaymentAPI(APIView):
             cart=cart,
             method=method,
             amount=total_amount,
+            ref_id=ref_id,
             success=payment_successful
         )
 
-        if payment_successful:
-            for item in cart_items:
-                Order.objects.create(
-                    product=item.product,
-                    quantity=item.quantity,
-                    user=self.request.user.profile,
-                    status='P'
-                )
-                item.product.stock -= item.quantity
-                item.product.sold_products += item.quantity
-                item.product.save()
-            cart_items.delete()
+        if payment_successful == None:
             return Response({
                 "message": f"Payment is now being processed via {method}.",
                 "total_amount": total_amount,
@@ -345,78 +336,56 @@ class PaymentAPI(APIView):
             raise RuntimeError(f"E-Wallet payment request failed: {e}")
 
 
+class PaymentStatusAPI(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        data = request.data.get('data')
+        ref_id = data.get('reference_id')
+        status = data.get('status')
+        payment = None
+
+        try:
+            cart = Cart.objects.get(user=self.request.user.profile)
+        except Cart.DoesNotExist:
+            return Response({"error": "Cart not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        if status == "SUCCEEDED":
+            payment = Payment.objects.get(reference_id=ref_id)
+            payment.success = True
+            payment.save()
+
+        if Payment.objects.get(reference_id=ref_id).success:
+            for item in cart_items:
+                Order.objects.create(
+                    product=item.product,
+                    quantity=item.quantity,
+                    user=self.request.user.profile,
+                    status='P'
+                )
+                item.product.stock -= item.quantity
+                item.product.sold_products += item.quantity
+                item.product.save()
+            cart_items.delete()
+
+            return Response(
+                {"message": "Payment status received: Success!"},
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"message": "Payment status received: Failed!"},
+                status=status.HTTP_200_OK
+            )
+
+
 class UserOrdersApi(generics.ListAPIView):
     serializer_class = OrderSerializer
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user.profile).order_by('-order_id')
-
-class WishlistAddAPI(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, *args, **kwargs):
-        product_id = self.kwargs.get('product_id')
-        if not product_id:
-            return Response(
-                {"error": "Product ID is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            product = Products.objects.get(product_id=product_id)
-        except Products.DoesNotExist:
-            return Response(
-                {"error": "Product not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        user_profile = self.request.user.profile
-        if product in user_profile.wishlist.products.all():
-            return Response(
-                {'message': 'Product already in wishlist.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        else:
-            user_profile.wishlist.products.add(product)
-            user_profile.wishlist.save()
-            return Response(
-                {"message": "Product added to wishlist."},
-                status=status.HTTP_200_OK
-            )
-
-
-class WishlistRemoveAPI(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, *args, **kwargs):
-        product_id = self.kwargs.get('product_id')
-        if not product_id:
-            return Response(
-                {"error": "Product ID is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            product = Products.objects.get(product_id=product_id)
-        except Products.DoesNotExist:
-            return Response(
-                {"error": "Product not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        user_profile = self.request.user.profile
-        if product not in user_profile.wishlist.products.all():
-            return Response(
-                {'message': 'Product not in wishlist.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        else:
-            user_profile.wishlist.products.remove(product)
-            user_profile.wishlist.save()
-            return Response(
-                {"message": "Product removed from wishlist."},
-                status=status.HTTP_200_OK
-            )
 
 
 class WishlistRetrieveAPI(APIView):
@@ -424,20 +393,21 @@ class WishlistRetrieveAPI(APIView):
 
     def get(self, request, *args, **kwargs):
         user_profile = self.request.user.profile
-        
+
         # Ensure the user has a wishlist
         wishlist, created = Wishlist.objects.get_or_create(user=user_profile)
-        
+
         products = wishlist.products.all()
-        
+
         # Return a list of product IDs and their details
         result = []
         for product in products:
             result.append({
-                "id": f"wishlist_{product.product_id}",  # Using a unique ID format for frontend
+                # Using a unique ID format for frontend
+                "id": f"wishlist_{product.product_id}",
                 "product": product.product_id
             })
-            
+
         return Response(
             result,
             status=status.HTTP_200_OK
@@ -464,13 +434,13 @@ class WishlistToggleAPI(APIView):
             )
 
         user_profile = self.request.user.profile
-        
+
         # Ensure the user has a wishlist
         wishlist, created = Wishlist.objects.get_or_create(user=user_profile)
-        
+
         # Check if product is already in wishlist
         is_in_wishlist = product in wishlist.products.all()
-        
+
         if is_in_wishlist:
             # Remove product from wishlist
             wishlist.products.remove(product)
@@ -479,9 +449,9 @@ class WishlistToggleAPI(APIView):
             # Add product to wishlist
             wishlist.products.add(product)
             action = "added to"
-        
+
         wishlist.save()
-        
+
         return Response(
             {
                 "message": f"Product {action} wishlist.",
