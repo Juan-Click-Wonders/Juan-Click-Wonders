@@ -342,27 +342,32 @@ class PaymentStatusAPI(APIView):
     def post(self, request, *args, **kwargs):
         data = request.data.get('data')
         ref_id = data.get('reference_id')
-        status = data.get('status')
+        payment_status = data.get('status')
         payment = None
+        try:
+            payment = Payment.objects.get(ref_id=ref_id)
+            user = payment.user
+        except Payment.DoesNotExist:
+            return Response({"error": "Payment not found."}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            cart = Cart.objects.get(user=self.request.user.profile)
+            cart = Cart.objects.get(user=user)
         except Cart.DoesNotExist:
             return Response({"error": "Cart not found."}, status=status.HTTP_404_NOT_FOUND)
 
         cart_items = CartItem.objects.filter(cart=cart)
 
-        if status == "SUCCEEDED":
-            payment = Payment.objects.get(reference_id=ref_id)
+        if payment_status == "SUCCEEDED":
+            payment = Payment.objects.get(ref_id=ref_id)
             payment.success = True
             payment.save()
 
-        if Payment.objects.get(reference_id=ref_id).success:
+        if Payment.objects.get(ref_id=ref_id).success:
             for item in cart_items:
                 Order.objects.create(
                     product=item.product,
                     quantity=item.quantity,
-                    user=self.request.user.profile,
+                    user=user,
                     status='P'
                 )
                 item.product.stock -= item.quantity

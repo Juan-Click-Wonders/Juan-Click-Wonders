@@ -82,7 +82,7 @@ class Payment(models.Model):
     method = models.CharField(max_length=3, choices=PAYMENT_METHODS)
     amount = models.FloatField()
     ref_id = models.CharField(max_length=255)
-    success = models.BooleanField(default=None)
+    success = models.BooleanField(default=None, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
 
