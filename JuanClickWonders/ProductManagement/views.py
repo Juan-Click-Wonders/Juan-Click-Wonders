@@ -1,7 +1,8 @@
 import requests
 from django.conf import settings
+from django.db.models import Q
 from rest_framework import generics, status, filters
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
@@ -11,6 +12,7 @@ from urllib.parse import quote
 
 from ProductManagement.models import Products, Category, Cart, CartItem, Payment, Rating, Order, Wishlist
 from ProductManagement.serializers import ProductsSerializer, CategorySerializer, CartSerializer, CartItemSerializer, RatingSerializer, OrderSerializer
+from UserManagement.models import UserProfile
 
 
 class ProductListCreateApi(generics.ListCreateAPIView):
@@ -391,7 +393,7 @@ class UserOrdersApi(generics.ListAPIView):
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user.profile).order_by('-order_id')
-      
+
 class OrderStatusUpdateAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -520,3 +522,70 @@ class WishlistToggleAPI(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class IsAdminCheckAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        is_staff = request.user.is_staff
+        is_superuser = request.user.is_superuser
+        is_admin = is_staff or is_superuser
+
+        # Log the user's admin status
+        print(f"User: {request.user.email}, is_staff: {is_staff}, is_superuser: {is_superuser}, is_admin: {is_admin}")
+
+        return Response({
+            "is_admin": is_admin,
+            "is_staff": is_staff,
+            "is_superuser": is_superuser
+        }, status=status.HTTP_200_OK)
+
+
+class AdminOrdersListAPI(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Check if user is admin
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            return Order.objects.none()
+
+        # Get query parameters for filtering
+        user_email = self.request.query_params.get('user_email', None)
+
+        queryset = Order.objects.all().order_by('-order_id')
+
+        # Filter by user email if provided
+        if user_email:
+            queryset = queryset.filter(user__user__email__icontains=user_email)
+
+        return queryset
+
+
+class AdminUserListAPI(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Check if user is admin
+        if not (self.request.user.is_staff or self.request.user.is_superuser):
+            return UserProfile.objects.none()
+
+        # Get all users with their profiles
+        return UserProfile.objects.select_related('user').all()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        # Format the response manually instead of using a serializer
+        user_list = []
+        for profile in queryset:
+            user_list.append({
+                "id": profile.user.id,
+                "email": profile.user.email,
+                "name": f"{profile.first_name} {profile.last_name}",
+                "is_staff": profile.user.is_staff,
+                "is_superuser": profile.user.is_superuser
+            })
+
+        return Response(user_list)

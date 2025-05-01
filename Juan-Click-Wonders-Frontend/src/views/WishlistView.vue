@@ -181,7 +181,6 @@ export default {
                 const response = await api.get('/wishlist/');
                 
                 if (response.data && response.data.length > 0) {
-                    // Process wishlist items - response.data now contains objects with id and product
                     const productPromises = response.data.map(async (item) => {
                         try {
                             const productId = item.product;

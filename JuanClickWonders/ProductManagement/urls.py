@@ -18,6 +18,9 @@ from ProductManagement.views import (
     WishlistRetrieveAPI,
     WishlistToggleAPI,
     PaymentStatusAPI,
+    IsAdminCheckAPI,
+    AdminOrdersListAPI,
+    AdminUserListAPI,
 )
 
 urlpatterns = [
@@ -57,4 +60,8 @@ urlpatterns = [
     path('orders/<int:order_id>/status/', OrderStatusUpdateAPI.as_view(), name='order_status_update'),
     path('wishlist/', WishlistRetrieveAPI.as_view(), name='wishlist_list'),
     path('wishlist/toggle/', WishlistToggleAPI.as_view(), name='wishlist_toggle'),
+
+    path('admins/check/', IsAdminCheckAPI.as_view(), name='admin_check'),
+    path('admins/orders/', AdminOrdersListAPI.as_view(), name='admin_orders'),
+    path('admins/users/', AdminUserListAPI.as_view(), name='admin_users'),
 ]

@@ -20,10 +20,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                   </svg>
                 </div>
-                <input 
+                <input
                   id="email"
-                  v-model="email" 
-                  type="email" 
+                  v-model="email"
+                  type="email"
                   required
                   class="pl-10 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   placeholder="Enter your email"
@@ -39,13 +39,13 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
-                <input 
+                <input
                   id="password"
-                  v-model="password" 
-                  type="password" 
+                  v-model="password"
+                  type="password"
                   required
                   class="pl-10 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  placeholder="Enter your password" 
+                  placeholder="Enter your password"
                 />
               </div>
             </div>
@@ -73,8 +73,8 @@
             </div>
 
             <div>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-gray-800 to-black hover:from-black hover:to-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition duration-150"
               >
                 <span v-if="isLoading" class="flex items-center">
@@ -91,7 +91,7 @@
 
           <div class="mt-8 text-center">
             <p class="text-sm text-gray-600">
-              Don't have an account? 
+              Don't have an account?
               <router-link to="/auth/register" class="font-medium text-yellow-600 hover:text-yellow-500">
                 Create one now
               </router-link>
@@ -135,17 +135,17 @@ export default {
         if (response.status === 200) {
           // The backend sets HTTP-only cookies automatically
           localStorage.setItem('isAuthenticated', 'true');
-          
+
           // Try to get user's name for better UX
           if (response.data?.user?.first_name) {
             localStorage.setItem('userName', response.data.user.first_name);
           }
-          
+
           // Initialize cart count to 0 on fresh login
           localStorage.setItem('cartCount', '0');
           window.dispatchEvent(new Event('cart-updated'));
           window.dispatchEvent(new Event('auth-state-changed'));
-          
+
           try {
             await this.$router.push("/profile/");
           } catch (routerError) {
@@ -166,7 +166,7 @@ export default {
             statusText: error.response.statusText
           } : 'No response'
         });
-        
+
         this.message = "Invalid email or password, please check your credentials.";
         this.isLoading = false;
       }

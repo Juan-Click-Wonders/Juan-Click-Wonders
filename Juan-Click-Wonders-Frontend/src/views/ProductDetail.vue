@@ -585,7 +585,7 @@ export default {
                         product: this.product.product_id
                     }
                 });
-
+                
                 this.ratings = response.data.map(rating => {
                     const processedRating = { ...rating };
 
@@ -719,7 +719,6 @@ export default {
                 } catch (profileError) {
                     console.error("Error fetching profile:", profileError);
                     if (profileError.response) {
-                        console.error("Profile error response:", profileError.response.data);
                         console.error("Profile error status:", profileError.response.status);
                     }
                 }
@@ -779,7 +778,6 @@ export default {
                     }
 
                     const file = fileInput.files[0];
-
                     formData.append('image_url', file);
 
                     const ratingEndpoint = '/ratings/create/';
@@ -856,9 +854,7 @@ export default {
                 console.error("Error submitting rating:", error);
 
                 if (error.response) {
-                    console.error("Error response data:", error.response.data);
                     console.error("Error response status:", error.response.status);
-                    console.error("Error response headers:", error.response.headers);
 
                     if (error.response.status === 403) {
                         alert("You have already reviewed this product.");
@@ -893,11 +889,8 @@ export default {
                         alert(`Error (${error.response.status}): ${error.message}`);
                     }
                 } else if (error.request) {
-                    console.error("No response received:", error.request);
                     alert("Network error - the server didn't respond. Please check your connection and try again.");
                 } else {
-                    console.error("Error message:", error.message);
-                    console.error("Full error:", error);
                     alert("An unexpected error occurred: " + error.message);
                 }
             } finally {
