@@ -567,7 +567,7 @@ export default {
             try {
                 const response = await api.get('/wishlist/');
                 if (response.data && Array.isArray(response.data)) {
-                    this.isInWishlist = response.data.some(item => 
+                    this.isInWishlist = response.data.some(item =>
                         item.product === this.product.product_id
                     );
                 }
@@ -687,13 +687,17 @@ export default {
                 const response = await api.post('/wishlist/toggle/', {
                     product: this.product.product_id
                 });
-                
+
                 if (response.data && response.data.is_in_wishlist !== undefined) {
                     this.isInWishlist = response.data.is_in_wishlist;
                 }
             } catch (error) {
                 console.error('Error updating wishlist:', error);
                 this.isInWishlist = wasInWishlist;
+                
+                if (error.response && error.response.status === 401) {
+                    this.$router.push('/auth/login');
+                }
             }
         },
         async submitRating() {
@@ -958,32 +962,41 @@ export default {
             }
 
             try {
+                // Get the user's cart (should exist from registration)
                 const cartResponse = await api.get('/cart/');
+                if (!cartResponse.data || cartResponse.data.length === 0) {
+                    throw new Error('Cart not found. Please try logging out and logging back in.');
+                }
+                
                 const cart = cartResponse.data[0];
 
-                const existingItem = cart.cart_items.find(item => item.product === this.product.product_id);
-
-                let quantityToAdd = this.quantity;
-
-                if (existingItem) {
-                    quantityToAdd = this.quantity - existingItem.quantity;
-                    if (quantityToAdd < 0) quantityToAdd = 0;
-                }
-
-                await api.post(`/cart/${cart.cart_id}/items/`, {
+                // Add the item to the cart
+                const response = await api.post(`/cart/${cart.cart_id}/items/`, {
                     product: this.product.product_id,
                     quantity: this.quantity
                 });
 
+                // Update the cart count in localStorage
                 const currentCount = parseInt(localStorage.getItem('cartCount') || '0');
-                localStorage.setItem('cartCount', (currentCount + quantityToAdd).toString());
+                localStorage.setItem('cartCount', (currentCount + this.quantity).toString());
+                
+                // Dispatch event to update cart count in other components
                 window.dispatchEvent(new Event('cart-updated'));
 
+                // Redirect to cart page
                 this.$router.push('/cart');
             } catch (error) {
                 console.error('Error adding to cart:', error);
-                if (error.response && error.response.status === 401) {
-                    this.$router.push('/auth/login/');
+                if (error.response) {
+                    if (error.response.status === 401) {
+                        this.$router.push('/auth/login/');
+                    } else if (error.response.status === 400) {
+                        alert(error.response.data.error || 'Failed to add item to cart. Please try again.');
+                    } else {
+                        alert('An error occurred while adding to cart. Please try again.');
+                    }
+                } else {
+                    alert(error.message || 'Network error. Please check your connection and try again.');
                 }
             }
         },
