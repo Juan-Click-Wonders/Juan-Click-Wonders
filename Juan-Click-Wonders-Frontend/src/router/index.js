@@ -73,6 +73,12 @@ const routes =[
       name: 'wishlist',
       component: () => import('../views/WishlistView.vue'),
     },
+    // 404 catch-all route - must be the last route
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('../views/NotFound.vue'),
+    },
   ];
 
 const router = createRouter({

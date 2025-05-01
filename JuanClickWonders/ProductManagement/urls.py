@@ -14,6 +14,7 @@ from ProductManagement.views import (
     RatingsDetailUpdateDeleteView,
     PaymentAPI,
     UserOrdersApi,
+    OrderStatusUpdateAPI,
     WishlistRetrieveAPI,
     WishlistToggleAPI,
     PaymentStatusAPI,
@@ -53,6 +54,7 @@ urlpatterns = [
     path("payment/", PaymentAPI.as_view(), name="payment"),
     path("payment/callback/", PaymentStatusAPI.as_view(), name="payment_callback"),
     path('orders/', UserOrdersApi.as_view(), name='user_orders'),
+    path('orders/<int:order_id>/status/', OrderStatusUpdateAPI.as_view(), name='order_status_update'),
     path('wishlist/', WishlistRetrieveAPI.as_view(), name='wishlist_list'),
     path('wishlist/toggle/', WishlistToggleAPI.as_view(), name='wishlist_toggle'),
 ]
