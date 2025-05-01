@@ -235,7 +235,7 @@
 
                             <div class="mt-6 mb-4">
                                 <p class="text-gray-800 font-medium mb-3">Payment Method</p>
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 gap-4">
                                     <label
                                         class="border border-gray-200 rounded-lg p-3 cursor-pointer transition-all duration-200"
                                         :class="selectedPayment === 'GCS' ? 'border-yellow-500 bg-yellow-50' : 'hover:border-yellow-500 hover:bg-yellow-50'">
@@ -244,16 +244,6 @@
                                                 @change="paymentError = ''"
                                                 class="cursor-pointer h-4 w-4 text-yellow-500 focus:ring-yellow-500" />
                                             <span class="flex-1 font-medium">GCash</span>
-                                        </div>
-                                    </label>
-                                    <label
-                                        class="border border-gray-200 rounded-lg p-3 cursor-pointer transition-all duration-200"
-                                        :class="selectedPayment === 'MYA' ? 'border-yellow-500 bg-yellow-50' : 'hover:border-yellow-500 hover:bg-yellow-50'">
-                                        <div class="flex items-center gap-2">
-                                            <input v-model="selectedPayment" type="radio" name="payment" value="MYA"
-                                                @change="paymentError = ''"
-                                                class="cursor-pointer h-4 w-4 text-yellow-500 focus:ring-yellow-500" />
-                                            <span class="flex-1 font-medium">Maya</span>
                                         </div>
                                     </label>
                                 </div>
