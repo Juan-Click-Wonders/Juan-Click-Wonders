@@ -113,12 +113,10 @@ export default {
             try {
                 const response = await api.get('/orders/');
                 this.orders = response.data;
-                console.log('Orders fetched:', this.orders);
             } catch (error) {
                 console.error('Error fetching orders:', error);
 
                 if (error.response) {
-                    console.log('Error response:', error.response);
                     if (error.response.status === 401) {
                         this.isAuthenticated = false;
                         this.$router.push('/auth/login');
