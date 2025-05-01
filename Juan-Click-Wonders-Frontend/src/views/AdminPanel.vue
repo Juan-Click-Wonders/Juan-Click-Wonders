@@ -170,13 +170,6 @@ export default {
         const data = response.data;
         this.isAdmin = data.is_admin;
 
-        // Log admin status details
-        console.log('Admin Panel - Admin status check:', {
-          is_admin: data.is_admin,
-          is_staff: data.is_staff,
-          is_superuser: data.is_superuser
-        });
-
         return this.isAdmin;
       } catch (error) {
         console.error('Error checking admin status:', error);
