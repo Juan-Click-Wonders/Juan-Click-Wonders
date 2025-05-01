@@ -73,6 +73,11 @@ const routes =[
       name: 'wishlist',
       component: () => import('../views/WishlistView.vue'),
     },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/AdminPanel.vue'),
+    },
     // 404 catch-all route - must be the last route
     {
       path: '/:pathMatch(.*)*',
