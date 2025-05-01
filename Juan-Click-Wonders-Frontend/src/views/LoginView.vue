@@ -66,9 +66,9 @@
 
             <div class="flex items-center justify-end">
               <div class="text-sm">
-                <a href="/auth/forgot-password" class="font-medium text-yellow-600 hover:text-yellow-500">
-                  Forgot password?
-                </a>
+              <a href="/auth/forgot-password" class="font-medium text-yellow-600 hover:text-yellow-500">
+                Forgot password?
+              </a>
               </div>
             </div>
 
