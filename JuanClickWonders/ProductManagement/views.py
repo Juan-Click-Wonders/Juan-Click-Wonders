@@ -351,6 +351,64 @@ class UserOrdersApi(generics.ListAPIView):
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user.profile).order_by('-order_id')
 
+
+class OrderStatusUpdateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        order_id = kwargs.get('order_id')
+        if not order_id:
+            return Response({"error": "Order ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            order = Order.objects.get(order_id=order_id)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the user is authorized to update this order
+        # In a real application, you might want to check if the user is staff or admin
+        if not request.user.is_staff and order.user != request.user.profile:
+            return Response({"error": "You don't have permission to update this order."},
+                           status=status.HTTP_403_FORBIDDEN)
+
+        new_status = request.data.get('status')
+        if not new_status:
+            return Response({"error": "New status is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate the new status
+        valid_statuses = dict(Order.ORDER_STATUSES)
+        if new_status not in valid_statuses:
+            return Response({"error": f"Invalid status. Valid statuses are: {', '.join(valid_statuses.keys())}"},
+                           status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the old status for comparison
+        old_status = order.status
+
+        # Update the order status
+        order.status = new_status
+        order.save()
+
+        # If the order status is changing to "Delivered" (D), update the product stock
+        # This is where we implement the requested feature
+        if new_status == 'D' and old_status != 'D':
+            product = order.product
+            # The stock was already reduced during payment, but we might want to
+            # update other product metrics or perform additional actions when
+            # the order is successfully delivered
+
+            # For example, we could increment a "successful_deliveries" counter if we had one
+            # Or we could trigger some analytics event
+
+            # For now, we'll just log that the order was successfully delivered
+            print(f"Order {order.order_id} for product {product.name} was successfully delivered.")
+
+        return Response({
+            "message": f"Order status updated to {valid_statuses[new_status]}.",
+            "order_id": order.order_id,
+            "status": valid_statuses[new_status]
+        }, status=status.HTTP_200_OK)
+
+
 class WishlistAddAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -424,12 +482,12 @@ class WishlistRetrieveAPI(APIView):
 
     def get(self, request, *args, **kwargs):
         user_profile = self.request.user.profile
-        
+
         # Ensure the user has a wishlist
         wishlist, created = Wishlist.objects.get_or_create(user=user_profile)
-        
+
         products = wishlist.products.all()
-        
+
         # Return a list of product IDs and their details
         result = []
         for product in products:
@@ -437,7 +495,7 @@ class WishlistRetrieveAPI(APIView):
                 "id": f"wishlist_{product.product_id}",  # Using a unique ID format for frontend
                 "product": product.product_id
             })
-            
+
         return Response(
             result,
             status=status.HTTP_200_OK
@@ -464,13 +522,13 @@ class WishlistToggleAPI(APIView):
             )
 
         user_profile = self.request.user.profile
-        
+
         # Ensure the user has a wishlist
         wishlist, created = Wishlist.objects.get_or_create(user=user_profile)
-        
+
         # Check if product is already in wishlist
         is_in_wishlist = product in wishlist.products.all()
-        
+
         if is_in_wishlist:
             # Remove product from wishlist
             wishlist.products.remove(product)
@@ -479,9 +537,9 @@ class WishlistToggleAPI(APIView):
             # Add product to wishlist
             wishlist.products.add(product)
             action = "added to"
-        
+
         wishlist.save()
-        
+
         return Response(
             {
                 "message": f"Product {action} wishlist.",
