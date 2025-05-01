@@ -22,7 +22,7 @@ For Windows users
 ./jcw-env/Scripts/activate 
 ```
 
-2. Install the necessary libraries
+2. Install the necessary libraries.
 
 ```bash
 cd Juan-Click-Wonders-Frontend
@@ -50,7 +50,16 @@ EMAIL_HOST_PASSWORD=your.email.password
 XENDIT_SECRET_KEY=your.xendit.secret.api.key
 ```
 
-4. Create necessary user and database in Postgres. Log in to Postgres using your admin user, create a role, and create a database.
+4. Install Ngrok on your machine. Here are the download links: [Windows](https://ngrok.com/downloads/windows), [macOS](https://ngrok.com/downloads/mac-os), [Linux](https://ngrok.com/downloads/linux).
+
+5. Go into your [Ngrok Dashboard](https://dashboard.ngrok.com/). On the left sidebar under `Getting Started`, click `Setup & Installation`. Then click `Static Domain` and copy the command provided by Ngrok for your system and paste it on your terminal. Change the port from `80` to `8000`. See the example below. Run the command on the terminal.
+
+```bash
+ngrok http --url=<static-url-ngrok-provided> 8000
+```
+
+
+6. Create necessary user and database in Postgres. Log in to Postgres using your admin user, create a role, and create a database.
 
 ```bash
 psql -U postgres
@@ -76,16 +85,20 @@ GRANT ALL PRIVILEGES ON SCHEMA public TO jcw_user;
 ALTER ROLE jcw_user CREATEDB;
 ```
 
-5. Migrate the database
+7. Migrate the database.
 
 ```bash
 python manage.py migrate
 ```
 
-6. Run the development server
+8. Run the development servers.
 
 ```bash
 python manage.py runserver
+```
+
+```bash
+npm run dev
 ```
 
 # Contributors
