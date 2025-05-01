@@ -567,14 +567,12 @@ export default {
             try {
                 const response = await api.get('/wishlist/');
                 if (response.data && Array.isArray(response.data)) {
-
-                    this.isInWishlist = response.data.some(item =>
-                        item.product_id === this.product.product_id
+                    this.isInWishlist = response.data.some(item => 
+                        item.product === this.product.product_id
                     );
                 }
             } catch (error) {
                 console.error('Error checking wishlist status:', error);
-
             }
         },
         async fetchRatings() {
@@ -686,10 +684,12 @@ export default {
             this.isInWishlist = !wasInWishlist;
 
             try {
-                if (wasInWishlist) {
-                    await api.delete(`/wishlist/remove/${this.product.product_id}/`);
-                } else {
-                    await api.post(`/wishlist/add/${this.product.product_id}/`);
+                const response = await api.post('/wishlist/toggle/', {
+                    product: this.product.product_id
+                });
+                
+                if (response.data && response.data.is_in_wishlist !== undefined) {
+                    this.isInWishlist = response.data.is_in_wishlist;
                 }
             } catch (error) {
                 console.error('Error updating wishlist:', error);
