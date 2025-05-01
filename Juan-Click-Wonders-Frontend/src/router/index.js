@@ -91,4 +91,47 @@ const router = createRouter({
   routes,
 });
 
+const restrictedForAdminRoutes = [
+  'product_list',
+  'product',
+  'cart',
+  'wishlist'
+];
+
+// Global navigation guard
+router.beforeEach(async (to, from, next) => {
+  // Check if user is authenticated
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  
+  if (isAuthenticated) {
+    // Check if the user is an admin
+    try {
+      const response = await fetch('http://127.0.0.1:8000/admins/check/', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const isAdmin = data.is_admin;
+        
+        // If user is admin and trying to access a restricted route, redirect to 404
+        if (isAdmin && restrictedForAdminRoutes.includes(to.name)) {
+          next({ name: 'not-found' });
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  }
+  
+  // Continue navigation as normal for non-admin users
+  next();
+});
+
 export default router

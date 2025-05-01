@@ -102,7 +102,7 @@
                             Sellers</span>
                     </h2>
                     <div class="h-1 w-24 bg-yellow-500 rounded-full mb-6"></div>
-                    <p class="text-gray-600 text-center max-w-2xl">Our most popular products that customers love</p>
+                    <p class="text-gray-600 text-center max-w-2xl">Our most popular products based on actual sales data</p>
                 </div>
 
                 <div class="relative">
@@ -136,7 +136,7 @@
                                             <p class="text-xl font-bold text-yellow-600">₱{{
                                                 product.price.toLocaleString() }}</p>
                                             <p class="text-xs text-gray-500">
-                                                <span class="font-semibold text-gray-700">{{ product.sold_products
+                                                <span class="text-gray-500">{{ product.sold_products
                                                 }}</span> sold
                                             </p>
                                         </div>
@@ -147,8 +147,7 @@
                     </div>
 
                     <button @click="prevSlide"
-                        class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 bg-white text-gray-900 p-3 rounded-full shadow-lg hover:bg-yellow-500 transition-colors z-10"
-                        :class="{ 'opacity-50 cursor-not-allowed': currentSlide === 0 }">
+                        class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 bg-white text-gray-900 p-3 rounded-full shadow-lg hover:bg-yellow-500 transition-colors z-10">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
                             </path>
@@ -156,8 +155,7 @@
                     </button>
 
                     <button @click="nextSlide"
-                        class="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-1 bg-white text-gray-900 p-3 rounded-full shadow-lg hover:bg-yellow-500 transition-colors z-10"
-                        :class="{ 'opacity-50 cursor-not-allowed': currentSlide >= topProducts.length - 4 }">
+                        class="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-1 bg-white text-gray-900 p-3 rounded-full shadow-lg hover:bg-yellow-500 transition-colors z-10">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
                             </path>
@@ -165,9 +163,9 @@
                     </button>
 
                     <div class="flex justify-center mt-8 space-x-2">
-                        <button v-for="(_, index) in topProducts.slice(0, Math.min(topProducts.length, 5))" :key="index"
-                            @click="goToSlide(index)" class="w-3 h-3 rounded-full transition-all duration-300"
-                            :class="currentSlide === index ? 'bg-yellow-500 scale-125' : 'bg-gray-300 hover:bg-gray-400'">
+                        <button v-for="index in totalSlides" :key="index-1"
+                            @click="goToSlide(index-1)" class="w-3 h-3 rounded-full transition-all duration-300"
+                            :class="currentSlide === (index-1) ? 'bg-yellow-500 scale-125' : 'bg-gray-300 hover:bg-gray-400'">
                         </button>
                     </div>
                 </div>
@@ -220,13 +218,7 @@
                                             class="text-xs font-semibold text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
                                             {{ product.category_name }}</p>
                                         <div class="flex items-center space-x-1">
-                                            <span class="text-xs text-gray-500">{{ product.sold_products }}</span>
-                                            <svg class="w-4 h-4 text-yellow-500" fill="currentColor"
-                                                viewBox="0 0 20 20">
-                                                <path
-                                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
-                                                </path>
-                                            </svg>
+                                            <span class="text-xs text-gray-500">{{ product.sold_products }} sold</span>
                                         </div>
                                     </div>
                                     <h3
@@ -273,19 +265,37 @@ export default {
             categoriesLoading: true
         };
     },
+    computed: {
+        // Calculate the total number of slides based on product count
+        totalSlides() {
+            // If products can be viewed 4 at a time (25% each), we need to calculate the number of possible slides
+            if (!this.topProducts || this.topProducts.length === 0) return 0;
+            
+            // For products that can be displayed 4 at a time, calculate total slide positions
+            // If we have 10 products, we need 7 slide positions (0-6)
+            // Consider the edge case if there are fewer than 4 products
+            return Math.max(1, this.topProducts.length - Math.min(this.topProducts.length, 4) + 1);
+        },
+        // Calculate whether we're on the last slide
+        isLastSlide() {
+            return this.currentSlide >= this.totalSlides - 1;
+        }
+    },
     methods: {
         prevSlide() {
             if (this.currentSlide > 0) {
                 this.currentSlide--;
             } else {
-                this.currentSlide = this.topProducts.length - 4;
+                // Loop to the end when pressing previous on the first slide
+                this.currentSlide = this.totalSlides - 1;
             }
             this.resetAutoSlide();
         },
         nextSlide() {
-            if (this.currentSlide < this.topProducts.length - 4) {
+            if (this.currentSlide < this.totalSlides - 1) {
                 this.currentSlide++;
             } else {
+                // Loop to the beginning when pressing next on the last slide
                 this.currentSlide = 0;
             }
             this.resetAutoSlide();
@@ -429,17 +439,10 @@ export default {
 
             this.featuredProducts = productsResponse.data.slice(0, 8);
 
-            const categoriesMap = new Map();
-            for (const product of topProductsResponse.data) {
-                if (!categoriesMap.has(product.category_name)) {
-                    categoriesMap.set(product.category_name, []);
-                }
-                categoriesMap.get(product.category_name).push(product);
-            }
-
-            this.topProducts = Array.from(categoriesMap.entries())
-                .map(([_, products]) => products[0])
-                .filter(product => product);
+            // Instead of grabbing one per category, get the actual top 10 best-selling products
+            this.topProducts = topProductsResponse.data
+                .sort((a, b) => b.sold_products - a.sold_products) // Sort by most sold
+                .slice(0, 10); // Take top 10
 
             this.loading = false;
 
@@ -457,7 +460,7 @@ export default {
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
 .bg-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2V6h4V4H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* Improved product image containers for white backgrounds */

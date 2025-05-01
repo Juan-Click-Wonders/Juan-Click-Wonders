@@ -6,6 +6,7 @@ __pycache__/
 *.py[cod]
 
 **/migrations/
+**/rating_images/
 !**/migrations/__init__.py
 **/.pytest_cache/
 

@@ -14,16 +14,16 @@
 
                     <!-- Navigation -->
                     <div class="flex space-x-6 font-medium">
-                        <router-link to="/"
+                        <router-link  v-if="!isAdmin" to="/"
                             class="py-4 px-2 border-b-2 border-transparent hover:border-yellow-500 hover:text-yellow-500 transition-colors duration-300">HOME</router-link>
-                        <router-link to="/product_list"
+                        <router-link  v-if="!isAdmin" to="/product_list"
                             class="py-4 px-2 border-b-2 border-transparent hover:border-yellow-500 hover:text-yellow-500 transition-colors duration-300">SHOP</router-link>
-                        <router-link to="/about"
+                        <router-link  v-if="!isAdmin" to="/about"
                             class="py-4 px-2 border-b-2 border-transparent hover:border-yellow-500 hover:text-yellow-500 transition-colors duration-300">ABOUT</router-link>
                     </div>
 
                     <!-- Search Bar -->
-                    <div v-if="!isAuthPage" class="flex-1 max-w-md mx-4 relative">
+                    <div v-if="!isAdmin" class="flex-1 max-w-md mx-4 relative">
                         <div class="relative">
                             <input type="text" placeholder="Search Products" v-model="searchQuery"
                                 @keyup.enter="handleSearch"
@@ -41,23 +41,33 @@
                     <!-- User Actions -->
                     <div class="flex items-center space-x-4">
                         <!-- Cart -->
-                        <router-link v-if="authState" to="/cart" class="relative p-2 hover:text-yellow-500 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            <span v-if="cartCount > 0" class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                                {{ cartCount }}
-                            </span>
+                        <router-link v-if="authState && !isAuthPage && !isAdmin" to="/cart" exact
+                            class="relative p-2 hover:text-yellow-500 transition-colors">
+                            <div class="relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                <span v-if="cartCount > 0"
+                                    class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                    {{ cartCount }}
+                                </span>
+                            </div>
                         </router-link>
-                        <router-link v-else to="/auth/login" class="relative p-2 hover:text-yellow-500 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            <span v-if="cartCount > 0"
-                                class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                                {{ cartCount }}
-                            </span>
-                        </router-link>
+                        <button v-else-if="!authState" @click="goToLogin" class="relative p-2 hover:text-yellow-500 transition-colors">
+                            <div class="relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                <span v-if="cartCount > 0"
+                                    class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                    {{ cartCount }}
+                                </span>
+                            </div>
+                        </button>
 
                         <!-- User -->
                         <div v-if="!authState" class="flex items-center">
@@ -82,15 +92,15 @@
                             </button>
                             <div v-show="showUserMenu"
                                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                <router-link to="/profile"
+                                <router-link v-if="!isAdmin" to="/profile"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     Your Profile
                                 </router-link>
-                                <router-link to="/orders"
+                                <router-link v-if="!isAdmin" to="/orders"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     Your Orders
                                 </router-link>
-                                <router-link to="/wishlist"
+                                <router-link v-if="!isAdmin" to="/wishlist"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     Your Wishlist
                                 </router-link>
@@ -131,22 +141,27 @@
                         <!-- Cart and User -->
                         <div class="flex items-center space-x-4">
                             <router-link v-if="authState" to="/cart" class="relative p-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                <span v-if="cartCount > 0" class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                                    {{ cartCount }}
-                                </span>
-                            </router-link>
-                            <router-link v-else to="/auth/login" class="relative p-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                                 <span v-if="cartCount > 0"
                                     class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                                     {{ cartCount }}
                                 </span>
                             </router-link>
+                            <button v-else @click="goToLogin" class="relative p-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                <span v-if="cartCount > 0"
+                                    class="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                    {{ cartCount }}
+                                </span>
+                            </button>
                             <router-link v-if="!authState" to="/auth/login"
                                 class="py-1 px-3 bg-yellow-500 text-gray-900 !text-gray-900 rounded-lg text-sm font-medium"
                                 style="color: #1F2937 !important;">
@@ -260,6 +275,37 @@ export default {
             authState.value = localStorage.getItem('isAuthenticated') === 'true';
             // Update userName when auth state changes
             userName.value = localStorage.getItem('userName') || 'User';
+
+            // Check if user is admin
+            if (authState.value) {
+                checkAdminStatus();
+            } else {
+                isAdmin.value = false;
+            }
+        };
+
+        const checkAdminStatus = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/admins/check/', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    isAdmin.value = data.is_admin;
+
+                } else {
+                    isAdmin.value = false;
+                }
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+                isAdmin.value = false;
+            }
         };
 
         onMounted(() => {
@@ -335,6 +381,9 @@ export default {
             // Close mobile menu after search
             this.showMobileMenu = false;
         },
+        goToLogin() {
+            this.$router.push('/auth/login');
+        },
         toggleUserMenu() {
             this.showUserMenu = !this.showUserMenu;
         },
@@ -350,11 +399,11 @@ export default {
             // Close menus
             this.showUserMenu = false;
             this.showMobileMenu = false;
-            
+
             // Dispatch events for components listening to auth and cart state
             window.dispatchEvent(new Event('auth-state-changed'));
             window.dispatchEvent(new Event('cart-updated'));
-            
+
             // Make API call to logout endpoint
             axios.post("http://127.0.0.1:8000/api/auth/logout/", {}, {
                 withCredentials: true

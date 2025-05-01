@@ -136,6 +136,12 @@ export default {
           // The backend sets HTTP-only cookies automatically
           localStorage.setItem('isAuthenticated', 'true');
 
+          // Check if the user is an admin
+          const adminCheckResponse = await axios.get(
+            "http://127.0.0.1:8000/admins/check/",
+            { withCredentials: true }
+          );
+
           // Try to get user's name for better UX
           if (response.data?.user?.first_name) {
             localStorage.setItem('userName', response.data.user.first_name);
@@ -147,7 +153,13 @@ export default {
           window.dispatchEvent(new Event('auth-state-changed'));
 
           try {
-            await this.$router.push("/profile/");
+            if (adminCheckResponse.data.is_admin) {
+              localStorage.setItem("isAdmin", "true");
+              await this.$router.push("/admin");
+            } else {
+              localStorage.setItem("isAdmin", "false");
+              await this.$router.push("/profile");
+            }
           } catch (routerError) {
             console.error("Router navigation error:", routerError);
             window.location.href = "/profile/";

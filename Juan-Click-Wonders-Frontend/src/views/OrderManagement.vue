@@ -105,29 +105,17 @@ export default {
             }
         },
         async fetchOrders() {
-            if (!this.isAuthenticated) return;
-
             this.isLoading = true;
             this.error = null;
-
+            
             try {
                 const response = await api.get('/orders/');
                 this.orders = response.data;
             } catch (error) {
-                console.error('Error fetching orders:', error);
-
-                if (error.response) {
-                    console.error('Error response:', error.response);
-                    if (error.response.status === 401) {
-                        this.isAuthenticated = false;
-                        this.$router.push('/auth/login');
-                    } else if (error.response.status === 500) {
-                        this.error = 'Server error. The order system might be experiencing issues.';
-                    } else {
-                        this.error = `Error (${error.response.status}): ${error.response.data.detail || 'There was an error loading your orders.'}`;
-                    }
+                if (error.response?.status === 401) {
+                    this.$router.push('/auth/login');
                 } else {
-                    this.error = 'There was an error connecting to the server. Please try again.';
+                    this.error = 'Failed to load orders. Please try again.';
                 }
             } finally {
                 this.isLoading = false;
@@ -152,11 +140,84 @@ export default {
                 default:
                     return 'bg-gray-100 text-gray-800';
             }
+        },
+        async fetchCart() {
+            if (!this.isAuthenticated) return;
+            try {
+                this.isLoading = true;
+                const cartResponse = await api.get('/cart/');
+                if (cartResponse.data && cartResponse.data.length > 0) {
+                    this.cart = cartResponse.data[0];
+                    this.cartItems = [];
+                    this.unavailableItems = [];
+
+                    let totalItems = 0;
+
+                    // Use Promise.all to fetch all products in parallel
+                    const productPromises = this.cart.cart_items.map(async (item) => {
+                        try {
+                            const productResponse = await api.get(`/products/${item.product}`);
+                            return {
+                                id: item.id,
+                                quantity: item.quantity,
+                                product: {
+                                    ID: item.product,
+                                    Name: productResponse.data.name,
+                                    Price: productResponse.data.price,
+                                    Image: productResponse.data.image_url,
+                                    Inventory_Level: productResponse.data.stock
+                                }
+                            };
+                        } catch (error) {
+                            console.error(`Error fetching product ${item.product}:`, error);
+                            this.unavailableItems.push(item.id);
+                            return null;
+                        }
+                    });
+
+                    const results = await Promise.all(productPromises);
+                    this.cartItems = results.filter(item => item !== null);
+
+                    // Count unique items instead of total quantity
+                    const uniqueItemCount = this.cartItems.length;
+
+                    // Set cart count to number of unique items
+                    localStorage.setItem('cartCount', uniqueItemCount.toString());
+                    window.dispatchEvent(new Event('cart-updated'));
+
+                    if (this.unavailableItems.length > 0) {
+                        this.message = `${this.unavailableItems.length} item${this.unavailableItems.length > 1 ? 's' : ''} in your cart ${this.unavailableItems.length > 1 ? 'are' : 'is'} no longer available.`;
+                        this.messageType = 'error';
+                    } else {
+                        this.message = null;
+                    }
+                } else {
+                    this.cartItems = [];
+                    this.cart = null;
+                    this.message = null;
+                    localStorage.setItem('cartCount', '0');
+                    window.dispatchEvent(new Event('cart-updated'));
+                }
+                this.isLoading = false;
+            } catch (error) {
+                console.error('Error fetching cart:', error);
+                this.cartItems = [];
+                this.cart = null;
+                this.message = 'There was an error loading your cart. Please try again.';
+                this.messageType = 'error';
+                this.isLoading = false;
+                if (error.response && error.response.status === 401) {
+                    this.isAuthenticated = false;
+                    localStorage.removeItem('cartCount');
+                    this.$router.push('/auth/login');
+                }
+            }
         }
     },
     async created() {
         const isAuth = await this.checkAuth();
         if (isAuth) {
+            await this.fetchCart();            
             await this.fetchOrders();
         }
     }
