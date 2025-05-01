@@ -6,7 +6,7 @@
                 <div class="hidden md:flex items-center justify-between">
                     <!-- Logo -->
                     <div class="flex items-center">
-                        <router-link to="/" class="flex items-center">
+                        <router-link to="/" class="flex items-center py-1">
                             <img src="/icon.png" alt="Logo" class="h-12 w-12 object-contain">
                             <span class="ml-2 text-xl font-bold text-yellow-500">Juan Click Wonders</span>
                         </router-link>
