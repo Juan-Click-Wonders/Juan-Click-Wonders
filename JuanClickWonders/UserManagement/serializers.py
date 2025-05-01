@@ -43,7 +43,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         user_profile = UserProfile.objects.create(user=user, **profile_data)
         Cart.objects.create(user=user_profile)
-        Wishlist.objects.create(user=user_profile)
         return user
 
 
