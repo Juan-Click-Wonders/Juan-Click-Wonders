@@ -110,7 +110,7 @@
                         <div class="flex transition-transform duration-700 ease-out"
                             :style="{ transform: `translateX(-${currentSlide * 25}%)` }">
                             <div v-for="product in topProducts" :key="product.product_id"
-                                class="w-full md:w-1/2 lg:w-1/4 flex-shrink-0 px-3">
+                                class="w-full md:w-1/2 lg:w-1/4 flex-shrink-0 px-3 py-4">
                                 <router-link :to="`/product/${product.product_id}`"
                                     class="block bg-white rounded-xl overflow-hidden transform hover:scale-105 transition-all duration-300 h-full shadow-md hover:shadow-xl">
                                     <div class="relative">

@@ -585,12 +585,8 @@ export default {
                         product: this.product.product_id
                     }
                 });
-
-                if (response.data && response.data.length > 0) {
-                }
-
+                
                 this.ratings = response.data.map(rating => {
-
                     const processedRating = { ...rating };
 
                     if (!processedRating.user_name) {
@@ -718,6 +714,7 @@ export default {
                             userId = 1;
                         }
                     } else {
+                        console.error("No profile data received");
                     }
                 } catch (profileError) {
                     console.error("Error fetching profile:", profileError);

@@ -6,7 +6,7 @@
                 <div class="hidden md:flex items-center justify-between">
                     <!-- Logo -->
                     <div class="flex items-center">
-                        <router-link to="/" class="flex items-center">
+                        <router-link to="/" class="flex items-center py-1">
                             <img src="/icon.png" alt="Logo" class="h-12 w-12 object-contain">
                             <span class="ml-2 text-xl font-bold text-yellow-500">Juan Click Wonders</span>
                         </router-link>
@@ -260,45 +260,6 @@ export default {
             authState.value = localStorage.getItem('isAuthenticated') === 'true';
             // Update userName when auth state changes
             userName.value = localStorage.getItem('userName') || 'User';
-            console.log('Auth state updated:', authState.value, 'User name:', userName.value);
-
-            // Check if user is admin
-            if (authState.value) {
-                checkAdminStatus();
-            } else {
-                isAdmin.value = false;
-            }
-        };
-
-        const checkAdminStatus = async () => {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/admins/check/', {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    isAdmin.value = data.is_admin;
-
-                    // Log admin status details
-                    console.log('Admin status check:', {
-                        is_admin: data.is_admin,
-                        is_staff: data.is_staff,
-                        is_superuser: data.is_superuser
-                    });
-                } else {
-                    isAdmin.value = false;
-                    console.log('Admin status check failed:', response.status);
-                }
-            } catch (error) {
-                console.error('Error checking admin status:', error);
-                isAdmin.value = false;
-            }
         };
 
         onMounted(() => {

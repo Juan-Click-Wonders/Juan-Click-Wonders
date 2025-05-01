@@ -117,6 +117,7 @@ export default {
                 console.error('Error fetching orders:', error);
 
                 if (error.response) {
+                    console.error('Error response:', error.response);
                     if (error.response.status === 401) {
                         this.isAuthenticated = false;
                         this.$router.push('/auth/login');
