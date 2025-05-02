@@ -52,7 +52,9 @@
                         <tr v-for="order in orders" :key="order.order_id" class="hover:bg-gray-50 transition-colors text-center">
                             <td class="px-6 py-4">#{{ order.order_id }}</td>
                             <td class="px-6 py-4 whitespace-normal break-words max-w-[200px] text-left">
+                                <router-link :to="'/product/' + order.product.product_id" @click="scrollToTop">
                                 {{ order.product.name }}
+                                </router-link>
                             </td>
                             <td class="px-6 py-4">₱{{ formatPrice(order.product.price) }}</td>
                             <td class="px-6 py-4">{{ order.quantity }}</td>

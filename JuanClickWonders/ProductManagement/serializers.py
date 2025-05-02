@@ -3,8 +3,10 @@ from ProductManagement.models import Products, Category, Cart, CartItem, Rating,
 
 
 class ProductsSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(source="category.category_name", read_only=True)
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True)
+    category_name = serializers.CharField(
+        source="category.category_name", read_only=True)
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), write_only=True)
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -34,11 +36,13 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = "__all__"
 
+
 class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ['id', 'cart', 'product', 'quantity']
-        read_only_fields = ['cart']  # Make cart read-only since we set it in the view
+        # Make cart read-only since we set it in the view
+        read_only_fields = ['cart']
 
     def validate_quantity(self, value):
         if value < 1:
@@ -56,13 +60,15 @@ class CartItemSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Invalid product")
 
         if product and value > product.stock:
-            raise serializers.ValidationError(f"Only {product.stock} items available in stock")
+            raise serializers.ValidationError(
+                f"Only {product.stock} items available in stock")
 
         return value
 
     def validate(self, data):
         # Remove cart validation since it's handled in the view
         return data
+
 
 class CartSerializer(serializers.ModelSerializer):
     cart_items = CartItemSerializer(many=True, read_only=True)
@@ -86,11 +92,13 @@ class CartSerializer(serializers.ModelSerializer):
     def get_total_price(self, obj):
         return sum(item.quantity * item.product.price for item in obj.cart_items.all())
 
+
 class RatingSerializer(serializers.ModelSerializer):
     # Add a field that will accept either a string URL or a file upload
     class Meta:
         model = Rating
-        fields = ['id', 'product', 'user', 'rating', 'description', 'created_at', 'image_url', 'user_name']
+        fields = ['id', 'product', 'user', 'rating',
+                  'description', 'created_at', 'image_url', 'user_name']
         extra_kwargs = {
             'image_url': {'required': False},
             'user_name': {'required': False}
@@ -108,7 +116,8 @@ class RatingSerializer(serializers.ModelSerializer):
 
         # Handle image URL
         if request and instance.image_url:
-            ret['image_url'] = request.build_absolute_uri(instance.image_url.url)
+            ret['image_url'] = request.build_absolute_uri(
+                instance.image_url.url)
 
         # Ensure user_name is populated
         if not ret.get('user_name') and instance.user:
@@ -136,11 +145,13 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['order_id', 'product', 'quantity', 'status', 'user', 'user_email']
+        fields = ['order_id', 'product', 'quantity',
+                  'status', 'user', 'user_email']
 
     def get_product(self, obj):
         if obj.product:
             return {
+                "product_id": obj.product.product_id,
                 "name": obj.product.name,
                 "price": obj.product.price
             }
